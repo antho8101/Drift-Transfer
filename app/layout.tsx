@@ -1,22 +1,60 @@
 import type { Metadata } from "next";
+import { siteConfig } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Drift Transfer - Free peer-to-peer file transfer",
-  description:
-    "Send large files directly from browser to browser with WebRTC. Free, open source, no account, no server-side file storage.",
-  metadataBase: new URL("https://drift-transfer.vercel.app"),
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: "Drift Transfer - Free Peer-to-Peer File Transfer",
+    template: "%s | Drift Transfer"
+  },
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
+  authors: [{ name: "Anthony", url: siteConfig.authorUrl }],
+  creator: "Anthony",
+  publisher: "Anthony",
+  keywords: [...siteConfig.keywords],
+  category: "technology",
+  alternates: {
+    canonical: "/"
+  },
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg"
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1
+    }
+  },
   openGraph: {
-    title: "Drift Transfer",
-    description:
-      "A free, open-source peer-to-peer file transfer app. No account, no server-side file storage.",
-    type: "website"
+    title: "Drift Transfer - Free Peer-to-Peer File Transfer",
+    description: siteConfig.description,
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "Drift Transfer - Free peer-to-peer file transfer"
+      }
+    ]
   },
   twitter: {
     card: "summary_large_image",
-    title: "Drift Transfer",
-    description:
-      "Send large files directly from browser to browser. Free, open source, no account."
+    title: "Drift Transfer - Free Peer-to-Peer File Transfer",
+    description: siteConfig.description,
+    images: ["/og-image.svg"]
   }
 };
 

@@ -1,0 +1,46 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#05060A"/>
+  <circle cx="220" cy="72" r="280" fill="#7DD3FC" opacity="0.14"/>
+  <circle cx="1050" cy="100" r="340" fill="#A78BFA" opacity="0.16"/>
+  <circle cx="870" cy="620" r="260" fill="#7DD3FC" opacity="0.08"/>
+  <g opacity="0.22">
+    <path d="M0 90H1200M0 180H1200M0 270H1200M0 360H1200M0 450H1200M0 540H1200" stroke="white"/>
+    <path d="M120 0V630M240 0V630M360 0V630M480 0V630M600 0V630M720 0V630M840 0V630M960 0V630M1080 0V630" stroke="white"/>
+  </g>
+  <rect x="70" y="68" width="1060" height="494" rx="56" fill="white" opacity="0.055"/>
+  <rect x="70.5" y="68.5" width="1059" height="493" rx="55.5" stroke="white" opacity="0.14"/>
+  <g transform="translate(90 90) scale(0.12)">
+    <g transform="matrix(2.52354,0,0,0.759549,-442.298,-45.75)">
+      <rect x="175.269" y="60.233" width="288.329" height="142.19" fill="white"/>
+    </g>
+    <g transform="matrix(2.02012,0,0,0.759549,-248.409,170.25)">
+      <rect x="175.269" y="60.233" width="288.329" height="142.19" fill="white"/>
+    </g>
+    <g transform="matrix(1.49272,0,0,0.759549,-49.3303,386.25)">
+      <rect x="175.269" y="60.233" width="288.329" height="142.19" fill="white"/>
+    </g>
+    <g transform="matrix(0.965325,0,0,0.759549,154.685,602.25)">
+      <rect x="175.269" y="60.233" width="288.329" height="142.19" fill="white"/>
+    </g>
+    <g transform="matrix(0.45869,0,0,0.759549,347.101,818.25)">
+      <rect x="175.269" y="60.233" width="288.329" height="142.19" fill="white"/>
+    </g>
+  </g>
+  <text x="92" y="300" fill="white" font-family="Inter, Arial, sans-serif" font-size="74" font-weight="700" letter-spacing="-4">
+    Drift Transfer
+  </text>
+  <text x="94" y="372" fill="#A9B4CF" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="500">
+    Free peer-to-peer file transfer in the browser.
+  </text>
+  <text x="94" y="428" fill="#A9B4CF" font-family="Inter, Arial, sans-serif" font-size="25">
+    WebRTC-powered. No accounts. No server-side file storage.
+  </text>
+  <rect x="94" y="476" width="224" height="48" rx="24" fill="white"/>
+  <text x="122" y="508" fill="#05060A" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">
+    Open a room
+  </text>
+  <rect x="338" y="476" width="272" height="48" rx="24" fill="white" opacity="0.08"/>
+  <text x="366" y="508" fill="white" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">
+    WebRTC DataChannel
+  </text>
+</svg>

@@ -125,7 +125,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
       channel.onopen = () => {
         setChannelOpen(true);
-        setStatusText("Secure peer link established");
+        setStatusText("Secure device link established");
         setStatusTone("connected");
       };
 
@@ -212,7 +212,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
           },
           onConnectionStateChange: (state) => {
             if (state === "connected") {
-              setStatusText("Secure peer link established");
+              setStatusText("Secure device link established");
               setStatusTone("connected");
             }
 
@@ -257,7 +257,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
             await makeOffer();
           }
         } else {
-          setStatusText("Joining peer link...");
+          setStatusText("Joining device link...");
           setStatusTone("waiting");
           await publishSignal({ type: "peer-ready", from: clientId });
         }
@@ -273,7 +273,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
           }
 
           if (signal.type === "offer" && roleRef.current === "receiver") {
-            setStatusText("Answering peer link...");
+            setStatusText("Answering device link...");
             const answer = await createAnswer(peer, signal.sdp);
             await publishSignal({ type: "answer", from: clientId, sdp: answer });
             await flushIceCandidates();
@@ -433,8 +433,8 @@ export function RoomClient({ roomId }: RoomClientProps) {
               Invite a friend. Let the file drift.
             </h1>
             <p className="mt-4 text-sm leading-6 text-mist">
-              Share this link with exactly one other device. We handle the nerdy
-              WebRTC handshake, then your file moves browser-to-browser.
+              Share this link with exactly one other device. We set up the
+              private browser link, then your file moves directly across.
             </p>
 
             <div className="premium-card mt-8 rounded-3xl border border-white/10 bg-black/20 p-4">
@@ -511,7 +511,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
                   ? "Relax. The incoming file will show up here when it drifts in."
                   : channelOpen
                     ? "Drop a file or click Choose file. We are live."
-                    : "Choose a file now. Send unlocks when the peer connects."
+                    : "Choose a file now. Send unlocks when the other device connects."
               }
               onFileSelected={handleFileSelected}
               selectedFileName={activeFileName}
@@ -524,7 +524,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
                 onClick={() => void sendSelectedFile(selectedFile)}
                 type="button"
               >
-                {channelOpen ? "Woosh, send file" : "Waiting for peer link..."}
+                {channelOpen ? "Woosh, send file" : "Waiting for device link..."}
               </button>
             ) : null}
 
@@ -581,7 +581,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
               >
                 Sponsor
               </a>
-              <span>Peer-to-peer powered</span>
+              <span>Browser-to-browser powered</span>
             </div>
           </div>
         </footer>

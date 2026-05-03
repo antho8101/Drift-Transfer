@@ -72,7 +72,7 @@ export function DropZone({
       <p className="mt-2 text-sm text-mist">
         {helperText ??
           (disabled
-            ? "Waiting for the peer link."
+            ? "Waiting for the other device."
             : "Drop a file or click to choose one.")}
       </p>
       <button

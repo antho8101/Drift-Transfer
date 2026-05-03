@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { StartTransferButton } from "@/components/StartTransferButton";
+import { siteConfig } from "@/lib/site";
 
 const logoPath = "/drift_transfer_logo.svg";
 
@@ -11,10 +12,10 @@ const features = [
       "No account, no pricing page, no weird hoops. Just open a room and send."
   },
   {
-    icon: "🛰️",
+    icon: "🌊",
     title: "Direct by design",
     description:
-      "Ably does the quick hello, then WebRTC takes over like the grown-up in the room."
+      "Your browser creates a private link with the other device, then the file glides across."
   },
   {
     icon: "🔒",
@@ -31,9 +32,88 @@ const steps = [
   "⬇️ Download on the other device"
 ];
 
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": `${siteConfig.url}/#webapplication`,
+      name: siteConfig.name,
+      url: siteConfig.url,
+      applicationCategory: "UtilitiesApplication",
+      operatingSystem: "Any modern browser",
+      description: siteConfig.description,
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD"
+      },
+      featureList: [
+        "Direct browser-to-browser file transfer",
+        "Direct device-to-device transfer",
+        "No user accounts",
+        "No server-side file storage",
+        "Private room links",
+        "Large file chunking"
+      ],
+      author: {
+        "@type": "Person",
+        name: "Anthony",
+        url: siteConfig.authorUrl
+      },
+      sameAs: [siteConfig.githubUrl, siteConfig.sponsorUrl]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${siteConfig.url}/#software`,
+      name: siteConfig.name,
+      applicationCategory: "File transfer",
+      operatingSystem: "Web",
+      description: siteConfig.longDescription,
+      isAccessibleForFree: true,
+      license: `${siteConfig.githubUrl}/blob/main/LICENSE`,
+      codeRepository: siteConfig.githubUrl
+    },
+    {
+      "@type": "FAQPage",
+      "@id": `${siteConfig.url}/#faq`,
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "Does Drift Transfer upload files to a server?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "No. Drift Transfer sends files directly from one browser to another. The app does not store uploaded files on a server."
+          }
+        },
+        {
+          "@type": "Question",
+          name: "Do I need an account to send files?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "No. Drift Transfer is free to use without accounts, authentication, or a database."
+          }
+        },
+        {
+          "@type": "Question",
+          name: "Can Drift Transfer send large files?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. Files are split into chunks and sent directly between browsers with transfer progress on both sides."
+          }
+        }
+      ]
+    }
+  ]
+};
+
 export default function Home() {
   return (
     <main className="relative min-h-screen overflow-hidden px-6 py-8">
+      <script
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        type="application/ld+json"
+      />
       <div className="ambient-grid pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:72px_72px] opacity-25" />
       <div className="ambient-orb pointer-events-none absolute left-1/2 top-0 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-driftBlue/10 blur-3xl" />
       <div className="ambient-orb-alt pointer-events-none absolute right-[-10rem] top-1/3 h-[28rem] w-[28rem] rounded-full bg-driftViolet/10 blur-3xl" />
@@ -78,7 +158,7 @@ export default function Home() {
         <section className="grid min-h-[calc(100vh-7rem)] items-center gap-8 py-14 lg:grid-cols-[1.08fr_0.92fr] lg:py-20">
           <div className="reveal-now" style={{ animationDelay: "90ms" }}>
             <div className="mb-6 inline-flex rounded-full border border-driftBlue/20 bg-driftBlue/10 px-4 py-2 text-sm font-medium text-driftBlue">
-              ✨ 100% free, no account, peer-to-peer
+              ✨ 100% free, no account, direct transfer
             </div>
             <h1 className="max-w-4xl text-5xl font-semibold tracking-[-0.07em] text-white sm:text-7xl lg:text-8xl">
               Big files. Tiny effort. Pure browser magic.
@@ -86,7 +166,7 @@ export default function Home() {
             <p className="mt-7 max-w-2xl text-lg leading-8 text-mist sm:text-xl">
               Drift Transfer is the no-account file drop your group chat wishes
               it had. Open a room, share the link, and let the file glide from
-              one browser to another.
+              one browser to another. No cloud upload detour, no account wall.
             </p>
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -103,10 +183,10 @@ export default function Home() {
 
             <div className="mt-8 flex flex-wrap gap-3 text-sm text-mist">
               <span className="rounded-full border border-white/10 bg-white/[0.035] px-4 py-2">
-                ⚡ WebRTC DataChannel
+                ⚡ Direct browser link
               </span>
               <span className="rounded-full border border-white/10 bg-white/[0.035] px-4 py-2">
-                🛰️ Ably signaling only
+                🔒 No server storage
               </span>
               <span className="rounded-full border border-white/10 bg-white/[0.035] px-4 py-2">
                 🌍 Open source
@@ -125,7 +205,7 @@ export default function Home() {
                     🚀 Live room
                   </p>
                   <p className="mt-2 text-xl font-semibold text-white">
-                    Secure peer link, vibes included
+                    Secure device link, vibes included
                   </p>
                 </div>
                 <div className="rounded-full bg-emerald-300/10 px-3 py-1.5 text-sm text-emerald-200">
@@ -190,9 +270,9 @@ export default function Home() {
               A tiny handshake, then the fun part.
             </h2>
             <p className="mt-5 leading-8 text-mist">
-              Ably quietly exchanges the WebRTC offer, answer, ICE candidates,
-              and room presence. Once the peer link is live, the file gets
-              chunked up and sent through the browser DataChannel.
+              Drift Transfer creates a temporary room, connects both browsers,
+              then sends the file in small chunks directly to the other device.
+              You get a smooth transfer without creating an account.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -222,7 +302,7 @@ export default function Home() {
               </h2>
               <p className="mt-5 max-w-2xl leading-8 text-mist">
                 Drift Transfer is a public GitHub project by Anthony Carayon.
-                PRs, bug reports, design polish, and nerdy WebRTC ideas are
+                PRs, bug reports, design polish, and thoughtful product ideas are
                 welcome. If this saves you a headache, a sponsor click keeps the
                 lights glowing.
               </p>
@@ -246,6 +326,36 @@ export default function Home() {
               </a>
             </div>
           </div>
+        </section>
+
+        <section className="reveal-up grid gap-4 py-8 md:grid-cols-3">
+          <article className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-6">
+            <h2 className="text-lg font-semibold text-white">
+              Does Drift Transfer upload files?
+            </h2>
+            <p className="mt-3 leading-7 text-mist">
+              No. Files move directly between browsers. Drift Transfer does not
+              store uploaded files on an app server.
+            </p>
+          </article>
+          <article className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-6">
+            <h2 className="text-lg font-semibold text-white">
+              Is an account required?
+            </h2>
+            <p className="mt-3 leading-7 text-mist">
+              Nope. Start a room, share the link, send the file. No signup and
+              no user database.
+            </p>
+          </article>
+          <article className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-6">
+            <h2 className="text-lg font-semibold text-white">
+              Can it handle large files?
+            </h2>
+            <p className="mt-3 leading-7 text-mist">
+              Yes. Files are split into chunks and sent with progress updates on
+              both devices.
+            </p>
+          </article>
         </section>
 
         <footer className="reveal-up mb-2 border-t border-white/10 py-8">
@@ -279,7 +389,7 @@ export default function Home() {
               >
                 Sponsor
               </a>
-              <span>WebRTC powered</span>
+              <span>Browser-to-browser powered</span>
             </div>
           </div>
         </footer>
