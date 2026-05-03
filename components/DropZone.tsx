@@ -76,7 +76,7 @@ export function DropZone({
             : "Drop a file or click to choose one.")}
       </p>
       <button
-        className="mt-6 rounded-full border border-white/15 bg-white px-5 py-2.5 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+        className="magic-button mt-6 rounded-full border border-white/15 bg-white px-5 py-2.5 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={disabled}
         onClick={(event) => {
           event.stopPropagation();

@@ -15,7 +15,7 @@ export function StartTransferButton() {
 
   return (
     <button
-      className="group relative overflow-hidden rounded-full bg-white px-7 py-4 text-sm font-semibold text-ink shadow-2xl shadow-sky-500/20 transition duration-300 hover:-translate-y-0.5 hover:shadow-sky-500/30 disabled:cursor-wait disabled:opacity-70"
+      className="magic-button group rounded-full bg-white px-7 py-4 text-sm font-semibold text-ink shadow-2xl shadow-sky-500/20 transition duration-300 hover:-translate-y-0.5 hover:shadow-sky-500/30 disabled:cursor-wait disabled:opacity-70"
       disabled={isStarting}
       onClick={handleStart}
       type="button"

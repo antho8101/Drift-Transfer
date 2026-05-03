@@ -1,7 +1,22 @@
 {
   "name": "drift-transfer",
   "version": "0.1.0",
+  "description": "Free open-source peer-to-peer file transfer with WebRTC DataChannels.",
   "private": true,
+  "author": "Anthony Carayon",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antho8101/Drift-Transfer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/antho8101/Drift-Transfer/issues"
+  },
+  "homepage": "https://github.com/antho8101/Drift-Transfer#readme",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/antho8101"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

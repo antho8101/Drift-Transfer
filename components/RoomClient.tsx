@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   useCallback,
@@ -401,11 +402,21 @@ export function RoomClient({ roomId }: RoomClientProps) {
     role === "sender" ? selectedFile?.name : incomingMetadata?.filename;
 
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl flex-col">
-        <header className="mb-8 flex flex-col gap-4 rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
+    <main className="relative min-h-screen overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
+      <div className="ambient-grid pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:72px_72px] opacity-20" />
+      <div className="ambient-orb-alt pointer-events-none absolute right-[-8rem] top-[-8rem] h-[28rem] w-[28rem] rounded-full bg-driftViolet/10 blur-3xl" />
+      <div className="ambient-orb pointer-events-none absolute bottom-[-12rem] left-[-10rem] h-[30rem] w-[30rem] rounded-full bg-driftBlue/10 blur-3xl" />
+
+      <div className="relative mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl flex-col">
+        <header className="reveal-now mb-8 flex flex-col gap-4 rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
           <Link className="flex items-center gap-3" href="/">
-            <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-driftBlue to-driftViolet" />
+            <Image
+              alt="Drift Transfer logo"
+              className="h-9 w-9 object-contain"
+              height={36}
+              src="/drift_transfer_logo.svg"
+              width={36}
+            />
             <span className="font-medium tracking-[0.24em] text-white">
               DRIFT TRANSFER
             </span>
@@ -414,38 +425,38 @@ export function RoomClient({ roomId }: RoomClientProps) {
         </header>
 
         <section className="grid flex-1 gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <aside className="rounded-[2rem] border border-white/10 bg-white/[0.055] p-6 shadow-glow backdrop-blur-2xl">
+          <aside className="premium-card reveal-now rounded-[2rem] border border-white/10 bg-white/[0.055] p-6 shadow-glow backdrop-blur-2xl">
             <p className="text-sm uppercase tracking-[0.3em] text-driftBlue">
-              Room {roomId}
+              🚪 Room {roomId}
             </p>
             <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-white">
-              Invite one device.
+              Invite a friend. Let the file drift.
             </h1>
             <p className="mt-4 text-sm leading-6 text-mist">
-              First visitor sends, second visitor receives. Ably coordinates the
-              link, then the file drifts over a WebRTC DataChannel.
+              Share this link with exactly one other device. We handle the nerdy
+              WebRTC handshake, then your file moves browser-to-browser.
             </p>
 
-            <div className="mt-8 rounded-3xl border border-white/10 bg-black/20 p-4">
+            <div className="premium-card mt-8 rounded-3xl border border-white/10 bg-black/20 p-4">
               <p className="mb-2 text-xs uppercase tracking-[0.24em] text-mist">
-                Invite link
+                🔗 Invite link
               </p>
               <div className="break-all rounded-2xl bg-white/5 p-3 text-sm text-white">
                 {shareLink || "Preparing link..."}
               </div>
               <button
-                className="mt-3 w-full rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:opacity-60"
+                className="magic-button mt-3 w-full rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:opacity-60"
                 disabled={!shareLink}
                 onClick={copyInviteLink}
                 type="button"
               >
-                {copied ? "Link copied" : "Copy invite link"}
+                {copied ? "Copied. Go make magic." : "Copy invite link"}
               </button>
             </div>
 
             <div className="mt-6 grid gap-3 text-sm text-mist">
-              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                <span>Your role</span>
+              <div className="premium-card flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                <span>🎭 Your role</span>
                 <span className="font-medium text-white">
                   {role === "sender"
                     ? "Sender"
@@ -454,12 +465,17 @@ export function RoomClient({ roomId }: RoomClientProps) {
                       : "Detecting..."}
                 </span>
               </div>
-              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                <span>File channel</span>
+              <div className="premium-card flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                <span>⚡ File channel</span>
                 <span className="font-medium text-white">
-                  {channelOpen ? "Open" : "Waiting"}
+                  {channelOpen ? "Open and ready" : "Warming up"}
                 </span>
               </div>
+            </div>
+
+            <div className="mt-6 rounded-3xl border border-driftBlue/15 bg-driftBlue/10 p-4 text-sm leading-6 text-sky-100">
+              💡 Pro tip: keep both tabs open until the transfer is done. No
+              tab, no tunnel.
             </div>
 
             {error ? (
@@ -469,18 +485,18 @@ export function RoomClient({ roomId }: RoomClientProps) {
             ) : null}
           </aside>
 
-          <section className="rounded-[2rem] border border-white/10 bg-white/[0.055] p-6 shadow-glow backdrop-blur-2xl">
+          <section className="premium-card reveal-now rounded-[2rem] border border-white/10 bg-white/[0.055] p-6 shadow-glow backdrop-blur-2xl">
             <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.3em] text-driftViolet">
-                  Transfer
+                  🌊 Transfer deck
                 </p>
                 <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white">
                   {transferState === "complete"
-                    ? "Transfer complete"
+                    ? "Transfer complete. Smooth landing."
                     : role === "receiver"
-                      ? "Ready to receive"
-                      : "Drop and send"}
+                      ? "Ready to catch the drop"
+                      : "Drop it here and ship it"}
                 </h2>
               </div>
               <div className="rounded-full border border-white/10 px-4 py-2 text-sm text-mist">
@@ -492,10 +508,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
               disabled={role !== "sender" || transferState === "sending"}
               helperText={
                 role === "receiver"
-                  ? "The incoming file will appear here."
+                  ? "Relax. The incoming file will show up here when it drifts in."
                   : channelOpen
-                    ? "Drop a file or click Choose file."
-                    : "Choose a file now. It will send when the peer connects."
+                    ? "Drop a file or click Choose file. We are live."
+                    : "Choose a file now. Send unlocks when the peer connects."
               }
               onFileSelected={handleFileSelected}
               selectedFileName={activeFileName}
@@ -503,16 +519,16 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
             {role === "sender" && selectedFile && transferState !== "sending" ? (
               <button
-                className="mt-4 w-full rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="magic-button mt-4 w-full rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!channelOpen}
                 onClick={() => void sendSelectedFile(selectedFile)}
                 type="button"
               >
-                {channelOpen ? "Send file" : "Waiting for peer link..."}
+                {channelOpen ? "Woosh, send file" : "Waiting for peer link..."}
               </button>
             ) : null}
 
-            <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5">
+            <div className="premium-card mt-6 rounded-3xl border border-white/10 bg-black/20 p-5">
               <div className="mb-4 flex flex-col gap-2 text-sm text-mist sm:flex-row sm:items-center sm:justify-between">
                 <span>
                   {transferState === "sending"
@@ -521,7 +537,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
                       ? "Receiving file..."
                       : transferState === "complete"
                         ? "Transfer complete"
-                        : "Waiting for file..."}
+                        : "Waiting for the drop..."}
                 </span>
                 <span>
                   {formatBytes(activeBytes)} / {formatBytes(activeFileSize)}
@@ -535,7 +551,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
             {receivedFile ? (
               <a
-                className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5"
+                className="magic-button mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5"
                 download={receivedFile.name}
                 href={receivedFile.url}
               >
@@ -544,6 +560,31 @@ export function RoomClient({ roomId }: RoomClientProps) {
             ) : null}
           </section>
         </section>
+
+        <footer className="reveal-up mt-8 border-t border-white/10 py-6">
+          <div className="flex flex-col gap-3 text-sm text-mist sm:flex-row sm:items-center sm:justify-between">
+            <p>Made with ❤ by Anthony. Free, open source, no accounts.</p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                className="transition hover:text-white"
+                href="https://github.com/antho8101/Drift-Transfer"
+                rel="noreferrer"
+                target="_blank"
+              >
+                GitHub
+              </a>
+              <a
+                className="transition hover:text-white"
+                href="https://github.com/sponsors/antho8101"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Sponsor
+              </a>
+              <span>Peer-to-peer powered</span>
+            </div>
+          </div>
+        </footer>
       </div>
     </main>
   );
