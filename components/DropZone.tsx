@@ -4,12 +4,14 @@ import { useRef, useState } from "react";
 
 type DropZoneProps = {
   disabled?: boolean;
+  helperText?: string;
   selectedFileName?: string;
   onFileSelected: (file: File) => void;
 };
 
 export function DropZone({
   disabled = false,
+  helperText,
   selectedFileName,
   onFileSelected
 }: DropZoneProps) {
@@ -46,6 +48,11 @@ export function DropZone({
         setIsDragging(false);
         acceptFile(event.dataTransfer.files[0]);
       }}
+      onKeyDown={(event) => {
+        if (!disabled && (event.key === "Enter" || event.key === " ")) {
+          inputRef.current?.click();
+        }
+      }}
       role="button"
       tabIndex={disabled ? -1 : 0}
     >
@@ -63,10 +70,22 @@ export function DropZone({
         {selectedFileName || "Drop your file here"}
       </p>
       <p className="mt-2 text-sm text-mist">
-        {disabled
-          ? "Waiting for the peer link."
-          : "Drop a file or click to choose one."}
+        {helperText ??
+          (disabled
+            ? "Waiting for the peer link."
+            : "Drop a file or click to choose one.")}
       </p>
+      <button
+        className="mt-6 rounded-full border border-white/15 bg-white px-5 py-2.5 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={disabled}
+        onClick={(event) => {
+          event.stopPropagation();
+          inputRef.current?.click();
+        }}
+        type="button"
+      >
+        Choose file
+      </button>
     </div>
   );
 }

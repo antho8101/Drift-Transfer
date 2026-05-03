@@ -333,21 +333,12 @@ export function RoomClient({ roomId }: RoomClientProps) {
     };
   }, []);
 
-  async function copyInviteLink() {
-    if (!shareLink) {
-      return;
-    }
-
-    await navigator.clipboard.writeText(shareLink);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
-  }
-
-  async function handleFileSelected(file: File) {
+  const sendSelectedFile = useCallback(async (file: File) => {
     const channel = dataChannelRef.current;
 
     if (!channel || channel.readyState !== "open") {
-      setError("The peer link is not ready yet.");
+      setStatusText("Waiting for another device...");
+      setStatusTone("waiting");
       return;
     }
 
@@ -372,6 +363,32 @@ export function RoomClient({ roomId }: RoomClientProps) {
           : "The transfer could not be completed."
       );
     }
+  }, []);
+
+  async function copyInviteLink() {
+    if (!shareLink) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(shareLink);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+
+  function handleFileSelected(file: File) {
+    setError("");
+    setSelectedFile(file);
+    setSentBytes(0);
+    setTransferState("idle");
+
+    if (!channelOpen) {
+      setStatusText("File ready. Waiting for another device...");
+      setStatusTone("waiting");
+      return;
+    }
+
+    setStatusText("File ready to send");
+    setStatusTone("connected");
   }
 
   const activeFileSize =
@@ -472,10 +489,28 @@ export function RoomClient({ roomId }: RoomClientProps) {
             </div>
 
             <DropZone
-              disabled={role !== "sender" || !channelOpen || transferState === "sending"}
+              disabled={role !== "sender" || transferState === "sending"}
+              helperText={
+                role === "receiver"
+                  ? "The incoming file will appear here."
+                  : channelOpen
+                    ? "Drop a file or click Choose file."
+                    : "Choose a file now. It will send when the peer connects."
+              }
               onFileSelected={handleFileSelected}
               selectedFileName={activeFileName}
             />
+
+            {role === "sender" && selectedFile && transferState !== "sending" ? (
+              <button
+                className="mt-4 w-full rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!channelOpen}
+                onClick={() => void sendSelectedFile(selectedFile)}
+                type="button"
+              >
+                {channelOpen ? "Send file" : "Waiting for peer link..."}
+              </button>
+            ) : null}
 
             <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-5">
               <div className="mb-4 flex flex-col gap-2 text-sm text-mist sm:flex-row sm:items-center sm:justify-between">
