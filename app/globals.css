@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #05060a;
+  --color-charcoal: #0b0f17;
+  --color-mist: #a9b4cf;
+  --color-driftBlue: #7dd3fc;
+  --color-driftViolet: #a78bfa;
+  --shadow-glow: 0 0 60px rgba(125, 211, 252, 0.14);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(125, 211, 252, 0.14), transparent 28rem),
+    radial-gradient(circle at 80% 20%, rgba(167, 139, 250, 0.12), transparent 30rem),
+    linear-gradient(135deg, #05060a 0%, #080b12 48%, #0b0f17 100%);
+  color: #f8fbff;
+}
+
+::selection {
+  background: rgba(125, 211, 252, 0.28);
+}

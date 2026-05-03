@@ -1,0 +1,72 @@
+"use client";
+
+import { useRef, useState } from "react";
+
+type DropZoneProps = {
+  disabled?: boolean;
+  selectedFileName?: string;
+  onFileSelected: (file: File) => void;
+};
+
+export function DropZone({
+  disabled = false,
+  selectedFileName,
+  onFileSelected
+}: DropZoneProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  function acceptFile(file?: File) {
+    if (!file || disabled) {
+      return;
+    }
+
+    onFileSelected(file);
+  }
+
+  return (
+    <div
+      className={`group rounded-[1.75rem] border border-dashed p-8 text-center transition duration-300 ${
+        isDragging
+          ? "border-driftBlue bg-sky-300/10"
+          : "border-white/15 bg-white/[0.035]"
+      } ${disabled ? "opacity-55" : "hover:border-driftBlue/60 hover:bg-white/[0.055]"}`}
+      onClick={() => !disabled && inputRef.current?.click()}
+      onDragEnter={(event) => {
+        event.preventDefault();
+        setIsDragging(true);
+      }}
+      onDragLeave={(event) => {
+        event.preventDefault();
+        setIsDragging(false);
+      }}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        event.preventDefault();
+        setIsDragging(false);
+        acceptFile(event.dataTransfer.files[0]);
+      }}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+    >
+      <input
+        className="hidden"
+        disabled={disabled}
+        onChange={(event) => acceptFile(event.target.files?.[0])}
+        ref={inputRef}
+        type="file"
+      />
+      <div className="mx-auto mb-5 h-16 w-16 rounded-3xl bg-gradient-to-br from-driftBlue/20 to-driftViolet/20 p-4 shadow-inner shadow-white/5 transition duration-300 group-hover:scale-105">
+        <div className="h-full w-full rounded-2xl bg-gradient-to-br from-driftBlue to-driftViolet opacity-80" />
+      </div>
+      <p className="text-lg font-medium text-white">
+        {selectedFileName || "Drop your file here"}
+      </p>
+      <p className="mt-2 text-sm text-mist">
+        {disabled
+          ? "Waiting for the peer link."
+          : "Drop a file or click to choose one."}
+      </p>
+    </div>
+  );
+}
