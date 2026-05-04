@@ -60,7 +60,8 @@ type RoomStatusKey =
   | "filesReadyWaiting"
   | "filesReadyPlural"
   | "filesReadySingular"
-  | "sendingFile";
+  | "sendingFile"
+  | "transferFailed";
 
 const REALTIME_SETUP_TIMEOUT_MS = 15_000;
 
@@ -496,7 +497,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
           ably.connection.off(handleAblyConnectionState);
           channel.unsubscribe();
           channel.presence.unsubscribe();
-          void channel.presence.leave();
+          void channel.presence.leave().catch(() => undefined);
           dataChannelRef.current?.close();
           peer.close();
           ably.close();
@@ -591,7 +592,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
       setStatusTone("complete");
       notifyTransferComplete();
     } catch (transferError) {
-      setStatusKey("setupFailed");
+      setStatusKey("transferFailed");
       setStatusTone("error");
       setError(
         transferError instanceof Error
