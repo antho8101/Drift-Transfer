@@ -177,6 +177,11 @@ export const dictionaries = {
       pending: "Pending",
       file: "File",
       download: "Download",
+      openDownloads: "Open downloads",
+      downloadReadyTitle: "Your file landed",
+      downloadReadyText:
+        "The transfer is complete. Download it now while this tab is open.",
+      close: "Close",
       checkFailed: "Check failed",
       filesSelected: "files selected"
     },
@@ -381,6 +386,11 @@ export const dictionaries = {
       pending: "En attente",
       file: "Fichier",
       download: "Télécharger",
+      openDownloads: "Ouvrir les téléchargements",
+      downloadReadyTitle: "Ton fichier est arrivé",
+      downloadReadyText:
+        "Le transfert est terminé. Télécharge-le maintenant tant que cet onglet est ouvert.",
+      close: "Fermer",
       checkFailed: "Échec du contrôle",
       filesSelected: "fichiers sélectionnés"
     },

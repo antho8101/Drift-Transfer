@@ -1,17 +1,20 @@
 "use client";
 
 import {
+  RiCloseLine,
   RiDownloadLine,
   RiGithubFill,
   RiHeart3Line,
   RiLink,
-  RiSendPlaneLine
+  RiSendPlaneLine,
+  RiSparklingLine
 } from "@remixicon/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSHA256 } from "hash-wasm";
 import {
+  type CSSProperties,
   useCallback,
   useEffect,
   useMemo,
@@ -64,6 +67,24 @@ type RoomStatusKey =
   | "transferFailed";
 
 const REALTIME_SETUP_TIMEOUT_MS = 15_000;
+const COMPLETION_SOUND_PATHS = {
+  receive: ["/sounds/success-receive.mp3", "/sounds/success-receive.wav"],
+  send: ["/sounds/success-send.mp3", "/sounds/success-send.wav"]
+} as const;
+const CONFETTI_PARTICLES = [
+  ["-190px", "-130px", "#7dd3fc", "0ms"],
+  ["-150px", "110px", "#a78bfa", "40ms"],
+  ["-105px", "-185px", "#ffffff", "80ms"],
+  ["-70px", "165px", "#38bdf8", "20ms"],
+  ["-25px", "-150px", "#c4b5fd", "110ms"],
+  ["30px", "145px", "#f8fbff", "60ms"],
+  ["75px", "-175px", "#7dd3fc", "120ms"],
+  ["120px", "135px", "#a78bfa", "30ms"],
+  ["165px", "-105px", "#ffffff", "90ms"],
+  ["205px", "65px", "#38bdf8", "140ms"],
+  ["-215px", "35px", "#c4b5fd", "70ms"],
+  ["185px", "-165px", "#f8fbff", "10ms"]
+] as const;
 
 function withTimeout<T>(promise: Promise<T>, message: string) {
   let timeoutId: ReturnType<typeof setTimeout>;
@@ -73,6 +94,19 @@ function withTimeout<T>(promise: Promise<T>, message: string) {
   });
 
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
+async function playCompletionSound(kind: keyof typeof COMPLETION_SOUND_PATHS) {
+  for (const soundPath of COMPLETION_SOUND_PATHS[kind]) {
+    try {
+      const audio = new Audio(soundPath);
+      audio.volume = 0.45;
+      await audio.play();
+      return;
+    } catch {
+      // Try the next supported file extension, then fail silently.
+    }
+  }
 }
 
 type RoomClientProps = {
@@ -137,6 +171,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
   const [now, setNow] = useState(0);
   const [channelOpen, setChannelOpen] = useState(false);
   const [roomFull, setRoomFull] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   const roleRef = useRef<Role>(null);
   const tRef = useRef(t);
@@ -170,25 +205,12 @@ export function RoomClient({ roomId }: RoomClientProps) {
     });
   }, []);
 
-  const notifyTransferComplete = useCallback(() => {
+  const notifyTransferComplete = useCallback((kind: keyof typeof COMPLETION_SOUND_PATHS) => {
     if ("vibrate" in navigator) {
       navigator.vibrate?.(80);
     }
 
-    try {
-      const audioContext = new AudioContext();
-      const oscillator = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-
-      oscillator.frequency.value = 660;
-      gain.gain.value = 0.025;
-      oscillator.connect(gain);
-      gain.connect(audioContext.destination);
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.12);
-    } catch {
-      // Browsers may block audio without a recent user gesture.
-    }
+    void playCompletionSound(kind);
   }, []);
 
   const handleControlMessage = useCallback(async (payload: string) => {
@@ -204,6 +226,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
       setIncomingMetadata(message);
       setReceivedBytes(0);
       setReceivedFile(null);
+      setIsDownloadModalOpen(false);
       const startedAt = Date.now();
       setTransferStartedAt(startedAt);
       setNow(startedAt);
@@ -243,13 +266,14 @@ export function RoomClient({ roomId }: RoomClientProps) {
       setTransferState("complete");
       setStatusKey(verified ? "complete" : "checksumMismatch");
       setStatusTone("complete");
+      setIsDownloadModalOpen(true);
       addRecentTransfer({
         name: metadata.filename,
         size: metadata.filesize,
         direction: "received",
         completedAt: new Date().toISOString()
       });
-      notifyTransferComplete();
+      notifyTransferComplete("receive");
     }
   }, [addRecentTransfer, notifyTransferComplete]);
 
@@ -590,7 +614,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
       setTransferState("complete");
       setStatusKey("complete");
       setStatusTone("complete");
-      notifyTransferComplete();
+      notifyTransferComplete("send");
     } catch (transferError) {
       setStatusKey("transferFailed");
       setStatusTone("error");
@@ -929,6 +953,67 @@ export function RoomClient({ roomId }: RoomClientProps) {
             </div>
 
             {receivedFiles.length ? (
+              <button
+                className="magic-button mt-6 w-full rounded-2xl border border-driftViolet/30 px-5 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-driftViolet/10"
+                onClick={() => setIsDownloadModalOpen(true)}
+                type="button"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <RiDownloadLine aria-hidden className="h-[22px] w-[22px]" />
+                  {t.room.openDownloads}
+                </span>
+              </button>
+            ) : null}
+          </section>
+        </section>
+
+        {isDownloadModalOpen && receivedFiles.length ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-ink/75 px-4 py-8 backdrop-blur-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="download-modal-title"
+          >
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              {CONFETTI_PARTICLES.map(([x, y, color, delay], index) => (
+                <span
+                  className="confetti-piece"
+                  key={`${x}-${y}-${index}`}
+                  style={
+                    {
+                      "--confetti-x": x,
+                      "--confetti-y": y,
+                      "--confetti-color": color,
+                      "--confetti-delay": delay
+                    } as CSSProperties
+                  }
+                />
+              ))}
+            </div>
+
+            <div className="premium-card relative w-full max-w-lg rounded-[2rem] border border-white/10 bg-white/[0.075] p-6 text-center shadow-glow backdrop-blur-2xl sm:p-8">
+              <button
+                aria-label={t.room.close}
+                className="absolute right-4 top-4 rounded-full border border-white/10 p-2 text-mist transition hover:bg-white/10 hover:text-white"
+                onClick={() => setIsDownloadModalOpen(false)}
+                type="button"
+              >
+                <RiCloseLine aria-hidden className="h-[22px] w-[22px]" />
+              </button>
+
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-driftBlue to-driftViolet text-white shadow-glow">
+                <RiSparklingLine aria-hidden className="h-[30px] w-[30px]" />
+              </div>
+              <h2
+                className="mt-5 text-3xl font-semibold tracking-[-0.04em] text-white"
+                id="download-modal-title"
+              >
+                {t.room.downloadReadyTitle}
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-mist">
+                {t.room.downloadReadyText}
+              </p>
+
               <div className="mt-6 grid gap-3">
                 {receivedFiles.map((file) => (
                   <a
@@ -937,17 +1022,19 @@ export function RoomClient({ roomId }: RoomClientProps) {
                     href={file.url}
                     key={`${file.name}-${file.checksum}`}
                   >
-                    <span className="inline-flex items-center gap-2">
-                      <RiDownloadLine aria-hidden className="h-[22px] w-[22px]" />
-                      {t.room.download} {file.name}
+                    <span className="inline-flex min-w-0 items-center gap-2">
+                      <RiDownloadLine aria-hidden className="h-[22px] w-[22px] shrink-0" />
+                      <span className="truncate">{t.room.download} {file.name}</span>
                     </span>
-                    <span>{file.verified ? t.room.verified : t.room.checkFailed}</span>
+                    <span className="shrink-0">
+                      {file.verified ? t.room.verified : t.room.checkFailed}
+                    </span>
                   </a>
                 ))}
               </div>
-            ) : null}
-          </section>
-        </section>
+            </div>
+          </div>
+        ) : null}
 
         <footer className="reveal-up mt-8 border-t border-white/10 py-6">
           <div className="flex flex-col gap-3 text-sm text-mist sm:flex-row sm:items-center sm:justify-between">
