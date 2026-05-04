@@ -6,7 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState
+  useSyncExternalStore
 } from "react";
 import {
   dictionaries,
@@ -21,6 +21,8 @@ type LanguageContextValue = {
 };
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
+const LANGUAGE_STORAGE_KEY = "drift-transfer-language";
+const LANGUAGE_CHANGE_EVENT = "drift-transfer-language-change";
 
 function detectLanguage(): Language {
   if (typeof navigator === "undefined") {
@@ -30,26 +32,42 @@ function detectLanguage(): Language {
   return navigator.language.toLowerCase().startsWith("fr") ? "fr" : "en";
 }
 
+function getBrowserLanguage(): Language {
+  if (typeof window === "undefined") {
+    return "en";
+  }
+
+  const storedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+
+  if (storedLanguage === "en" || storedLanguage === "fr") {
+    return storedLanguage;
+  }
+
+  return detectLanguage();
+}
+
+function subscribeToLanguageChanges(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener(LANGUAGE_CHANGE_EVENT, callback);
+
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener(LANGUAGE_CHANGE_EVENT, callback);
+  };
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(() => {
-    if (typeof window === "undefined") {
-      return "en";
-    }
-
-    const storedLanguage = localStorage.getItem("drift-transfer-language");
-
-    if (storedLanguage === "en" || storedLanguage === "fr") {
-      return storedLanguage;
-    }
-
-    return detectLanguage();
-  });
+  const language = useSyncExternalStore<Language>(
+    subscribeToLanguageChanges,
+    getBrowserLanguage,
+    () => "en"
+  );
 
   const value = useMemo<LanguageContextValue>(() => {
     function setLanguage(nextLanguage: Language) {
-      localStorage.setItem("drift-transfer-language", nextLanguage);
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
       document.documentElement.lang = nextLanguage;
-      setLanguageState(nextLanguage);
+      window.dispatchEvent(new Event(LANGUAGE_CHANGE_EVENT));
     }
 
     return {
