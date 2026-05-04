@@ -9,10 +9,14 @@ export const dictionaries = {
   en: {
     common: {
       github: "GitHub",
-      sponsor: "Sponsor",
+      sponsor: "Donate",
       footer:
         "Made with ❤ by Anthony. Free, open source, no accounts.",
-      powered: "Browser-to-browser powered"
+      powered: "Browser-to-browser powered",
+      operaGxWarningBeforeChrome:
+        "Opera GX may block the private transfer link. For the best experience, use",
+      chrome: "Chrome",
+      operaGxWarningAfterChrome: "instead."
     },
     start: {
       idle: "Start transfer",
@@ -25,7 +29,7 @@ export const dictionaries = {
       title: "Big files. Tiny effort. Pure browser magic.",
       intro:
         "Drift Transfer is the no-account file drop your group chat wishes it had. Open a room, share the link, and let the file glide from one browser to another. No cloud upload detour, no account wall.",
-      support: "Support the project",
+      support: "Donate to the project",
       chips: ["⚡ Direct browser link", "🔒 No server storage", "🌍 Open source"],
       mockRoom: "🚀 Live room",
       mockTitle: "Secure device link, vibes included",
@@ -51,6 +55,23 @@ export const dictionaries = {
             "Your files do not hang out on a server. They drift straight to the other browser."
         }
       ],
+      featureMockups: [
+        {
+          label: "Open room",
+          title: "$0 forever",
+          detail: "No account wall"
+        },
+        {
+          label: "Browser link",
+          title: "Device A → Device B",
+          detail: "Private direct path"
+        },
+        {
+          label: "Storage",
+          title: "Skipped",
+          detail: "Nothing parked on a server"
+        }
+      ],
       howEyebrow: "🧭 How it works",
       howTitle: "A tiny handshake, then the fun part.",
       howText:
@@ -61,13 +82,30 @@ export const dictionaries = {
         "📦 Drop a file",
         "⬇️ Download on the other device"
       ],
+      flowMockup: {
+        room: "Room ready",
+        invite: "Invite copied",
+        transfer: "Transfer live",
+        done: "Download ready"
+      },
       openSourceEyebrow: "🌍 Open source",
       openSourceTitle:
         "Built in public. Free because the internet is better that way.",
       openSourceText:
-        "Drift Transfer is a public GitHub project by Anthony Carayon. PRs, bug reports, design polish, and thoughtful product ideas are welcome. If this saves you a headache, a sponsor click keeps the lights glowing.",
+        "Drift Transfer is a public GitHub project by Anthony Carayon. PRs, bug reports, design polish, and thoughtful product ideas are welcome. If this saves you a headache, a donation keeps the lights glowing.",
       anthonyGithub: "Anthony on GitHub",
-      sponsorWork: "Sponsor the work",
+      sponsorWork: "Donate",
+      repoMockup: {
+        title: "Drift-Transfer",
+        visibility: "Public repository",
+        stars: "Open source",
+        issue: "Good first ideas welcome",
+        branch: "main"
+      },
+      qaMockups: [
+        { label: "Storage check", status: "Clear" },
+        { label: "Account check", status: "Clear" }
+      ],
       faq: [
         {
           title: "Does Drift Transfer upload files?",
@@ -123,6 +161,11 @@ export const dictionaries = {
         "Could not reach the realtime service. Check the Ably environment variable on Vercel, then refresh both devices.",
       transferFailed: "Transfer failed",
       transferError: "The transfer could not be completed.",
+      connectionBlocked: "Private link blocked",
+      connectionBlockedHelp:
+        "The realtime room is open, but the browser could not create the private device link. Disable VPN/ad blocking/WebRTC protection, or try a browser with WebRTC enabled.",
+      processingDownload: "Preparing download...",
+      processingDownloadHelp: "Rebuilding and checking the file before download.",
       filesReadyWaiting: "Files ready. Waiting for another device...",
       filesReadyPlural: "Files ready to send",
       filesReadySingular: "File ready to send",
@@ -164,6 +207,7 @@ export const dictionaries = {
       sendHelperLive: "Drop files or click Choose files. We are live.",
       sendHelperWaiting: "Choose files now. Send unlocks when the other device connects.",
       sendButton: "Woosh, send files",
+      sendLocked: "Files already sent",
       waitingLink: "Waiting for device link...",
       sendingFile: "Sending file...",
       waitingDrop: "Waiting for the drop...",
@@ -218,10 +262,14 @@ export const dictionaries = {
   fr: {
     common: {
       github: "GitHub",
-      sponsor: "Sponsor",
+      sponsor: "Faire un don",
       footer:
         "Made with ❤ by Anthony. Gratuit, open source, sans compte.",
-      powered: "Propulsé de navigateur à navigateur"
+      powered: "Propulsé de navigateur à navigateur",
+      operaGxWarningBeforeChrome:
+        "Opera GX peut bloquer le lien privé de transfert. Pour une meilleure expérience, utilise",
+      chrome: "Chrome",
+      operaGxWarningAfterChrome: "à la place."
     },
     start: {
       idle: "Démarrer un transfert",
@@ -234,7 +282,7 @@ export const dictionaries = {
       title: "Gros fichiers. Petit effort. Pure magie navigateur.",
       intro:
         "Drift Transfer, c’est le dépôt de fichiers sans compte que ton groupe attendait. Ouvre une room, partage le lien, et laisse le fichier glisser d’un navigateur à l’autre. Pas de détour cloud, pas de mur de connexion.",
-      support: "Soutenir le projet",
+      support: "Faire un don",
       chips: ["⚡ Lien direct navigateur", "🔒 Aucun stockage serveur", "🌍 Open source"],
       mockRoom: "🚀 Room live",
       mockTitle: "Lien privé établi, vibes incluses",
@@ -260,6 +308,23 @@ export const dictionaries = {
             "Tes fichiers ne patientent pas sur un serveur. Ils dérivent directement vers l’autre navigateur."
         }
       ],
+      featureMockups: [
+        {
+          label: "Ouvrir une room",
+          title: "0 € pour toujours",
+          detail: "Aucun mur de compte"
+        },
+        {
+          label: "Lien navigateur",
+          title: "Appareil A → Appareil B",
+          detail: "Chemin direct privé"
+        },
+        {
+          label: "Stockage",
+          title: "Évité",
+          detail: "Rien ne reste sur serveur"
+        }
+      ],
       howEyebrow: "🧭 Comment ça marche",
       howTitle: "Une mini poignée de main, puis la partie fun.",
       howText:
@@ -270,13 +335,30 @@ export const dictionaries = {
         "📦 Dépose un fichier",
         "⬇️ Télécharge sur l’autre appareil"
       ],
+      flowMockup: {
+        room: "Room prête",
+        invite: "Invitation copiée",
+        transfer: "Transfert live",
+        done: "Téléchargement prêt"
+      },
       openSourceEyebrow: "🌍 Open source",
       openSourceTitle:
         "Construit en public. Gratuit parce qu’internet est mieux comme ça.",
       openSourceText:
-        "Drift Transfer est un projet GitHub public par Anthony Carayon. PR, bugs, polish design et bonnes idées produit sont les bienvenus. Si ça t’évite une galère, un petit sponsor garde les lumières allumées.",
+        "Drift Transfer est un projet GitHub public par Anthony Carayon. PR, bugs, polish design et bonnes idées produit sont les bienvenus. Si ça t’évite une galère, un petit don garde les lumières allumées.",
       anthonyGithub: "Anthony sur GitHub",
-      sponsorWork: "Soutenir le travail",
+      sponsorWork: "Faire un don",
+      repoMockup: {
+        title: "Drift-Transfer",
+        visibility: "Dépôt public",
+        stars: "Open source",
+        issue: "Bonnes idées bienvenues",
+        branch: "main"
+      },
+      qaMockups: [
+        { label: "Contrôle stockage", status: "OK" },
+        { label: "Contrôle compte", status: "OK" }
+      ],
       faq: [
         {
           title: "Drift Transfer upload les fichiers ?",
@@ -332,6 +414,11 @@ export const dictionaries = {
         "Impossible de joindre le service temps réel. Vérifie la variable Ably sur Vercel, puis recharge les deux appareils.",
       transferFailed: "Échec du transfert",
       transferError: "Le transfert n’a pas pu être terminé.",
+      connectionBlocked: "Lien privé bloqué",
+      connectionBlockedHelp:
+        "La room temps réel est ouverte, mais le navigateur n’a pas réussi à créer le lien privé entre appareils. Désactive VPN, bloqueur de pubs/protection WebRTC, ou essaye un navigateur avec WebRTC actif.",
+      processingDownload: "Préparation du téléchargement...",
+      processingDownloadHelp: "Reconstruction et vérification du fichier avant téléchargement.",
       filesReadyWaiting: "Fichiers prêts. En attente d’un autre appareil...",
       filesReadyPlural: "Fichiers prêts à envoyer",
       filesReadySingular: "Fichier prêt à envoyer",
@@ -373,6 +460,7 @@ export const dictionaries = {
       sendHelperLive: "Dépose des fichiers ou clique sur Choisir. C’est prêt.",
       sendHelperWaiting: "Choisis les fichiers maintenant. L’envoi se débloque quand l’autre appareil se connecte.",
       sendButton: "Woosh, envoyer les fichiers",
+      sendLocked: "Fichiers déjà envoyés",
       waitingLink: "En attente du lien appareil...",
       sendingFile: "Envoi du fichier...",
       waitingDrop: "En attente du fichier...",

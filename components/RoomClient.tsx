@@ -23,6 +23,7 @@ import {
   useSyncExternalStore
 } from "react";
 import { createAblyClient, type DriftSignal } from "@/lib/ably";
+import { BrowserCompatibilityBanner } from "@/components/BrowserCompatibilityBanner";
 import {
   acceptAnswer,
   addIceCandidate,
@@ -42,11 +43,12 @@ import { useTranslations } from "@/components/LanguageProvider";
 import { ProgressBar } from "@/components/ProgressBar";
 import { SmartNav } from "@/components/SmartNav";
 import { StatusBadge } from "@/components/StatusBadge";
+import { appVersion } from "@/lib/appVersion";
 import { createVerificationCode, formatBytes, formatDuration } from "@/lib/utils";
 
 type Role = "sender" | "receiver" | null;
 type IntentRole = "send" | "receive";
-type TransferState = "idle" | "sending" | "receiving" | "complete";
+type TransferState = "idle" | "sending" | "receiving" | "processing" | "complete";
 type RoomStatusKey =
   | "preparing"
   | "receiving"
@@ -64,9 +66,12 @@ type RoomStatusKey =
   | "filesReadyPlural"
   | "filesReadySingular"
   | "sendingFile"
-  | "transferFailed";
+  | "transferFailed"
+  | "connectionBlocked"
+  | "processingDownload";
 
 const REALTIME_SETUP_TIMEOUT_MS = 15_000;
+const WEBRTC_LINK_TIMEOUT_MS = 25_000;
 const COMPLETION_SOUND_PATHS = {
   receive: ["/sounds/success-receive.mp3", "/sounds/success-receive.wav"],
   send: ["/sounds/success-send.mp3", "/sounds/success-send.wav"]
@@ -107,6 +112,12 @@ async function playCompletionSound(kind: keyof typeof COMPLETION_SOUND_PATHS) {
       // Try the next supported file extension, then fail silently.
     }
   }
+}
+
+function waitForNextFrame() {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
 }
 
 type RoomClientProps = {
@@ -172,8 +183,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
   const [channelOpen, setChannelOpen] = useState(false);
   const [roomFull, setRoomFull] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [sendLocked, setSendLocked] = useState(false);
 
   const roleRef = useRef<Role>(null);
+  const sendLockedRef = useRef(false);
   const tRef = useRef(t);
   const peerRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
@@ -239,6 +252,12 @@ export function RoomClient({ roomId }: RoomClientProps) {
     const metadata = metadataRef.current;
 
     if (message.kind === "complete" && metadata && message.fileId === metadata.fileId) {
+      setReceivedBytes(metadata.filesize);
+      setTransferState("processing");
+      setStatusKey("processingDownload");
+      setStatusTone("connected");
+      await waitForNextFrame();
+
       const blob = new Blob(chunksRef.current, { type: metadata.filetype });
       const url = URL.createObjectURL(blob);
       const hasher = await createSHA256();
@@ -262,7 +281,6 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
       setReceivedFile(nextReceivedFile);
       setReceivedFiles((files) => [...files, nextReceivedFile]);
-      setReceivedBytes(metadata.filesize);
       setTransferState("complete");
       setStatusKey(verified ? "complete" : "checksumMismatch");
       setStatusTone("complete");
@@ -573,14 +591,42 @@ export function RoomClient({ roomId }: RoomClientProps) {
     return () => window.clearInterval(interval);
   }, [transferState]);
 
+  useEffect(() => {
+    if (
+      channelOpen ||
+      (statusKey !== "connecting" && statusKey !== "answering")
+    ) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      if (dataChannelRef.current?.readyState === "open") {
+        return;
+      }
+
+      setStatusKey("connectionBlocked");
+      setStatusTone("error");
+      setError(tRef.current.room.connectionBlockedHelp);
+    }, WEBRTC_LINK_TIMEOUT_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [channelOpen, statusKey]);
+
   const sendSelectedFiles = useCallback(async (files: File[]) => {
     const channel = dataChannelRef.current;
+
+    if (sendLockedRef.current) {
+      return;
+    }
 
     if (!channel || channel.readyState !== "open") {
       setStatusKey("waitingDevice");
       setStatusTone("waiting");
       return;
     }
+
+    sendLockedRef.current = true;
+    setSendLocked(true);
 
     try {
       setError("");
@@ -639,6 +685,8 @@ export function RoomClient({ roomId }: RoomClientProps) {
   function handleFilesSelected(files: File[]) {
     setError("");
     setSelectedFiles(files);
+    sendLockedRef.current = false;
+    setSendLocked(false);
     setCurrentFileIndex(0);
     setSentBytes(0);
     setTransferStartedAt(null);
@@ -662,7 +710,9 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
   const isOutgoingTransferView =
     transferState === "sending" ||
-    (transferState !== "receiving" && intentRole === "send");
+    (transferState !== "receiving" &&
+      transferState !== "processing" &&
+      intentRole === "send");
   const activeFileSize =
     isOutgoingTransferView
       ? selectedFiles.reduce((total, file) => total + file.size, 0)
@@ -724,6 +774,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
             <StatusBadge tone={statusTone}>{statusText}</StatusBadge>
           </div>
         </SmartNav>
+
+        <div className="mb-6 -mt-7">
+          <BrowserCompatibilityBanner />
+        </div>
 
         <section className="grid flex-1 gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <aside className="premium-card reveal-now rounded-[2rem] border border-white/10 bg-white/[0.055] p-6 shadow-glow backdrop-blur-2xl">
@@ -880,13 +934,17 @@ export function RoomClient({ roomId }: RoomClientProps) {
             {canChooseFiles && selectedFiles.length > 0 && transferState !== "sending" ? (
               <button
                 className="magic-button mt-4 w-full rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={!channelOpen}
+                disabled={!channelOpen || sendLocked}
                 onClick={() => void sendSelectedFiles(selectedFiles)}
                 type="button"
               >
                 <span className="inline-flex items-center justify-center gap-2">
                   <RiSendPlaneLine aria-hidden className="h-[22px] w-[22px]" />
-                  {channelOpen ? t.room.sendButton : t.room.waitingLink}
+                  {sendLocked
+                    ? t.room.sendLocked
+                    : channelOpen
+                      ? t.room.sendButton
+                      : t.room.waitingLink}
                 </span>
               </button>
             ) : null}
@@ -898,15 +956,23 @@ export function RoomClient({ roomId }: RoomClientProps) {
                     ? t.room.sendingFile
                     : transferState === "receiving"
                       ? t.room.receiving
-                      : transferState === "complete"
-                        ? t.room.complete
-                        : t.room.waitingDrop}
+                      : transferState === "processing"
+                        ? t.room.processingDownload
+                        : transferState === "complete"
+                          ? t.room.complete
+                          : t.room.waitingDrop}
                 </span>
                 <span>
                   {formatBytes(activeBytes)} / {formatBytes(activeFileSize)}
                 </span>
               </div>
               <ProgressBar value={progress} />
+              {transferState === "processing" ? (
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-driftBlue/20 bg-driftBlue/10 px-3 py-2 text-sm text-sky-100">
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-driftBlue border-t-transparent" />
+                  {t.room.processingDownloadHelp}
+                </div>
+              ) : null}
               {activeFileName ? (
                 <p className="mt-4 text-sm text-white">{activeFileName}</p>
               ) : null}
@@ -1063,6 +1129,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
                 </span>
               </a>
               <span>{t.common.powered}</span>
+              <span>{appVersion}</span>
             </div>
           </div>
         </footer>

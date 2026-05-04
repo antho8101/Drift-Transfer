@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "@/components/LanguageProvider";
 import { SmartNav } from "@/components/SmartNav";
+import { appVersion } from "@/lib/appVersion";
 
 export function ForbiddenView() {
   const t = useTranslations();
@@ -124,6 +125,7 @@ export function ForbiddenView() {
                 </span>
               </a>
               <span>{t.common.powered}</span>
+              <span>{appVersion}</span>
             </div>
           </div>
         </footer>
