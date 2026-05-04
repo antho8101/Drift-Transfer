@@ -17,7 +17,7 @@ export function ForbiddenView() {
       <div className="ambient-orb-alt pointer-events-none absolute bottom-[-10rem] right-[-8rem] z-0 h-[30rem] w-[30rem] rounded-full bg-driftViolet/10 blur-3xl" />
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] max-w-5xl flex-col">
-        <SmartNav className="reveal-now flex items-center justify-between gap-6 rounded-[1.5rem] border border-white/10 bg-white/[0.045] px-4 py-3 backdrop-blur-2xl sm:px-5">
+        <SmartNav className="flex items-center justify-between gap-6 rounded-[1.5rem] border border-white/10 bg-white/[0.045] px-4 py-3 backdrop-blur-2xl sm:px-5">
           <Link className="flex items-center gap-3" href="/">
             <Image
               alt="Drift Transfer logo"

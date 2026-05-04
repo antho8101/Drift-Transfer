@@ -32,6 +32,10 @@ body {
   background-size: 140% 140%, 135% 135%, 100% 100%;
   animation: body-aurora 18s ease-in-out infinite;
   color: #f8fbff;
+  font-feature-settings:
+    "cv02" 1,
+    "cv03" 1,
+    "cv04" 1;
   user-select: none;
 }
 
@@ -251,6 +255,10 @@ code {
 }
 
 .magic-button {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  line-height: 1;
   position: relative;
   isolation: isolate;
   overflow: hidden;

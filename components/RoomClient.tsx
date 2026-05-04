@@ -633,7 +633,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
       <div className="ambient-orb pointer-events-none absolute bottom-[-12rem] left-[-10rem] z-0 h-[30rem] w-[30rem] rounded-full bg-driftBlue/10 blur-3xl" />
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl flex-col">
-        <SmartNav className="reveal-now mb-8 flex flex-col gap-4 rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
+        <SmartNav className="mb-12 flex flex-col gap-4 rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
           <Link className="flex items-center gap-3" href="/">
             <Image
               alt="Drift Transfer logo"
@@ -738,10 +738,6 @@ export function RoomClient({ roomId }: RoomClientProps) {
                   {channelOpen ? t.room.openReady : t.room.warmingUp}
                 </span>
               </div>
-            </div>
-
-            <div className="mt-6 rounded-3xl border border-driftBlue/15 bg-driftBlue/10 p-4 text-sm leading-6 text-sky-100">
-              {t.room.tip}
             </div>
 
             {error ? (
@@ -876,6 +872,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
                   </span>
                 </div>
               </div>
+            </div>
+
+            <div className="mt-6 rounded-3xl border border-driftBlue/15 bg-driftBlue/10 p-4 text-sm leading-6 text-sky-100">
+              {t.room.tip}
             </div>
 
             {receivedFiles.length ? (

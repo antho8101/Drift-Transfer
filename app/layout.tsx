@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
+import { Sora } from "next/font/google";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { siteConfig } from "@/lib/site";
 import "./globals.css";
+
+const sora = Sora({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-sans"
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -67,7 +74,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className={sora.className}>
         <LanguageProvider>
           {children}
           <div className="fixed bottom-4 right-4 z-50 sm:bottom-5 sm:right-5">

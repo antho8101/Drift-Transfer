@@ -80,7 +80,7 @@ export default function Home() {
       <div className="ambient-orb pointer-events-none absolute left-1/2 top-0 z-0 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-driftBlue/10 blur-3xl" />
       <div className="ambient-orb-alt pointer-events-none absolute right-[-10rem] top-1/3 z-0 h-[28rem] w-[28rem] rounded-full bg-driftViolet/10 blur-3xl" />
       <div className="relative z-10 mx-auto max-w-7xl">
-        <SmartNav className="reveal-now flex items-center justify-between gap-6 rounded-[1.5rem] border border-white/10 bg-white/[0.045] px-4 py-3 backdrop-blur-2xl sm:px-5">
+        <SmartNav className="flex items-center justify-between gap-6 rounded-[1.5rem] border border-white/10 bg-white/[0.045] px-4 py-3 backdrop-blur-2xl sm:px-5">
           <div className="flex items-center gap-3">
             <Image
               alt="Drift Transfer logo"
@@ -125,10 +125,10 @@ export default function Home() {
             <div className="mb-6 inline-flex rounded-full border border-driftBlue/20 bg-driftBlue/10 px-4 py-2 text-sm font-medium text-driftBlue">
               {t.home.badge}
             </div>
-            <h1 className="max-w-4xl text-5xl font-semibold tracking-[-0.07em] text-white sm:text-7xl lg:text-8xl">
+            <h1 className="max-w-4xl text-5xl font-semibold tracking-[-0.06em] text-white sm:text-6xl lg:text-7xl">
               {t.home.title}
             </h1>
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-mist sm:text-xl">
+            <p className="mt-7 max-w-2xl text-base leading-7 text-mist sm:text-lg sm:leading-8">
               {t.home.intro}
             </p>
 

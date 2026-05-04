@@ -1,9 +1,17 @@
+const isDevelopment = process.env.NODE_ENV !== "production";
+
+const scriptSources = ["'self'", "'unsafe-inline'"];
+
+if (isDevelopment) {
+  scriptSources.push("'unsafe-eval'");
+}
+
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      `script-src ${scriptSources.join(" ")}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
