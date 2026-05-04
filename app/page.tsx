@@ -114,6 +114,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         type="application/ld+json"
       />
+      <div className="grain-overlay pointer-events-none absolute inset-0" />
       <div className="ambient-grid pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:72px_72px] opacity-25" />
       <div className="ambient-orb pointer-events-none absolute left-1/2 top-0 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-driftBlue/10 blur-3xl" />
       <div className="ambient-orb-alt pointer-events-none absolute right-[-10rem] top-1/3 h-[28rem] w-[28rem] rounded-full bg-driftViolet/10 blur-3xl" />
@@ -122,10 +123,10 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <Image
               alt="Drift Transfer logo"
-              className="h-10 w-10 object-contain"
-              height={40}
+              className="h-9 w-9 object-contain"
+              height={36}
               src={logoPath}
-              width={40}
+              width={36}
             />
             <span className="text-sm font-medium uppercase tracking-[0.32em] text-white">
               Drift Transfer

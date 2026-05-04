@@ -203,6 +203,23 @@ code {
   animation: soft-float 7s ease-in-out infinite;
 }
 
+.grain-overlay {
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.28) 0 1px, transparent 1.2px),
+    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.18) 0 1px, transparent 1.2px),
+    radial-gradient(circle at 50% 50%, rgba(125, 211, 252, 0.12) 0 1px, transparent 1.4px);
+  background-position:
+    0 0,
+    11px 13px,
+    7px 5px;
+  background-size:
+    13px 13px,
+    17px 17px,
+    23px 23px;
+  mix-blend-mode: screen;
+  opacity: 0.16;
+}
+
 .ambient-grid {
   animation: ambient-grid 14s ease-in-out infinite;
 }

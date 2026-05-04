@@ -19,7 +19,7 @@ Report vulnerabilities privately to the maintainer with:
 
 - Files should never be uploaded to Drift Transfer servers.
 - Ably should only be used for signaling messages.
-- Do not commit API keys, `.env.local`, or credentials.
+- Do not commit API keys, `.env`, or credentials.
 - Treat `NEXT_PUBLIC_ABLY_API_KEY` as public because it is exposed to the browser.
 
 For production-scale public use, scoped Ably token authentication is recommended.

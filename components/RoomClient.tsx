@@ -403,6 +403,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
   return (
     <main className="relative min-h-screen overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
+      <div className="grain-overlay pointer-events-none absolute inset-0" />
       <div className="ambient-grid pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:72px_72px] opacity-20" />
       <div className="ambient-orb-alt pointer-events-none absolute right-[-8rem] top-[-8rem] h-[28rem] w-[28rem] rounded-full bg-driftViolet/10 blur-3xl" />
       <div className="ambient-orb pointer-events-none absolute bottom-[-12rem] left-[-10rem] h-[30rem] w-[30rem] rounded-full bg-driftBlue/10 blur-3xl" />

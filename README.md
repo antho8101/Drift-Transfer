@@ -145,7 +145,7 @@ npm install
 
 ### 3. Create Your Environment File
 
-Create `.env.local` in the project root:
+Create `.env` in the project root:
 
 ```env
 NEXT_PUBLIC_ABLY_API_KEY=your_ably_api_key_here
@@ -167,7 +167,7 @@ Drift Transfer needs Ably only to exchange WebRTC signaling messages.
 2. Create a new Ably app.
 3. Open the Ably app dashboard.
 4. Copy an API key.
-5. Add it to `.env.local`:
+5. Add it to `.env`:
 
 ```env
 NEXT_PUBLIC_ABLY_API_KEY=your_ably_api_key_here

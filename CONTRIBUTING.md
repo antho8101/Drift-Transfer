@@ -14,11 +14,10 @@ Thanks for helping improve Drift Transfer. The project should stay simple, free,
 
 ```bash
 npm install
-cp .env.example .env.local
 npm run dev
 ```
 
-Add your Ably API key to `.env.local`:
+Add your Ably API key to `.env`:
 
 ```env
 NEXT_PUBLIC_ABLY_API_KEY=your_ably_api_key_here
@@ -50,4 +49,4 @@ Please include:
 
 ## 🔐 Security and Privacy
 
-Never commit `.env.local`, API keys, credentials, or test files containing private data. If you find a security issue, please follow `SECURITY.md`.
+Never commit `.env`, API keys, credentials, or test files containing private data. If you find a security issue, please follow `SECURITY.md`.
