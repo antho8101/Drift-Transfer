@@ -1,6 +1,6 @@
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-const scriptSources = ["'self'", "'unsafe-inline'"];
+const scriptSources = ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'"];
 
 if (isDevelopment) {
   scriptSources.push("'unsafe-eval'");
