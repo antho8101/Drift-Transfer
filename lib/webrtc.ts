@@ -7,8 +7,21 @@ export type PeerHandlers = {
 };
 
 export function createPeerConnection(handlers: PeerHandlers) {
+  const iceServers: RTCIceServer[] = [
+    { urls: process.env.NEXT_PUBLIC_STUN_URL || "stun:stun.l.google.com:19302" }
+  ];
+  const turnUrl = process.env.NEXT_PUBLIC_TURN_URL;
+
+  if (turnUrl) {
+    iceServers.push({
+      urls: turnUrl,
+      username: process.env.NEXT_PUBLIC_TURN_USERNAME,
+      credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL
+    });
+  }
+
   const peer = new RTCPeerConnection({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    iceServers
   });
 
   peer.onicecandidate = (event) => {

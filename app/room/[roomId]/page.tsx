@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { RoomClient } from "@/components/RoomClient";
+import { isValidRoomId } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Private Transfer Room",
@@ -23,6 +25,10 @@ type RoomPageProps = {
 
 export default async function RoomPage({ params }: RoomPageProps) {
   const { roomId } = await params;
+
+  if (!isValidRoomId(roomId)) {
+    notFound();
+  }
 
   return <RoomClient roomId={roomId} />;
 }

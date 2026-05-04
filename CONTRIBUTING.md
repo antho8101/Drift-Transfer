@@ -20,7 +20,8 @@ npm run dev
 Add your Ably API key to `.env`:
 
 ```env
-NEXT_PUBLIC_ABLY_API_KEY=your_ably_api_key_here
+ABLY_API_KEY=your_ably_api_key_here
+NEXT_PUBLIC_SITE_URL=https://drift-transfer.com
 ```
 
 ## ✅ Before Opening a Pull Request

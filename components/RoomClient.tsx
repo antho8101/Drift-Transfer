@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { createSHA256 } from "hash-wasm";
 import {
   useCallback,
   useEffect,
@@ -25,9 +26,10 @@ import {
   sendFileOverDataChannel
 } from "@/lib/fileTransfer";
 import { DropZone } from "@/components/DropZone";
+import { InviteQrCode } from "@/components/InviteQrCode";
 import { ProgressBar } from "@/components/ProgressBar";
 import { StatusBadge } from "@/components/StatusBadge";
-import { formatBytes } from "@/lib/utils";
+import { createVerificationCode, formatBytes, formatDuration } from "@/lib/utils";
 
 type Role = "sender" | "receiver" | null;
 type TransferState = "idle" | "sending" | "receiving" | "complete";
@@ -41,6 +43,15 @@ type ReceivedFile = {
   name: string;
   type: string;
   size: number;
+  checksum: string;
+  verified: boolean;
+};
+
+type RecentTransfer = {
+  name: string;
+  size: number;
+  direction: "sent" | "received";
+  completedAt: string;
 };
 
 export function RoomClient({ roomId }: RoomClientProps) {
@@ -56,7 +67,8 @@ export function RoomClient({ roomId }: RoomClientProps) {
   const [statusTone, setStatusTone] =
     useState<"idle" | "waiting" | "connected" | "error" | "complete">("idle");
   const [error, setError] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [incomingMetadata, setIncomingMetadata] = useState<FileMetadata | null>(
     null
   );
@@ -64,7 +76,23 @@ export function RoomClient({ roomId }: RoomClientProps) {
   const [receivedBytes, setReceivedBytes] = useState(0);
   const [transferState, setTransferState] = useState<TransferState>("idle");
   const [receivedFile, setReceivedFile] = useState<ReceivedFile | null>(null);
+  const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
+  const [recentTransfers, setRecentTransfers] = useState<RecentTransfer[]>(() => {
+    if (typeof window === "undefined") {
+      return [];
+    }
+
+    try {
+      const storedHistory = localStorage.getItem("drift-transfer-history");
+      return storedHistory ? (JSON.parse(storedHistory) as RecentTransfer[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [transferStartedAt, setTransferStartedAt] = useState<number | null>(null);
+  const [now, setNow] = useState(0);
   const [channelOpen, setChannelOpen] = useState(false);
+  const [roomFull, setRoomFull] = useState(false);
 
   const roleRef = useRef<Role>(null);
   const peerRef = useRef<RTCPeerConnection | null>(null);
@@ -72,10 +100,46 @@ export function RoomClient({ roomId }: RoomClientProps) {
   const chunksRef = useRef<ArrayBuffer[]>([]);
   const metadataRef = useRef<FileMetadata | null>(null);
   const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
-  const receivedFileUrlRef = useRef<string | null>(null);
+  const receivedFileUrlsRef = useRef<string[]>([]);
   const shareLink = origin ? `${origin}/room/${roomId}` : "";
+  const verificationCode = createVerificationCode(roomId);
 
-  const handleControlMessage = useCallback((payload: string) => {
+  const addRecentTransfer = useCallback((transfer: RecentTransfer) => {
+    setRecentTransfers((history) => {
+      const nextHistory = [transfer, ...history].slice(0, 6);
+
+      try {
+        localStorage.setItem("drift-transfer-history", JSON.stringify(nextHistory));
+      } catch {
+        // Local history is a convenience only; transfers should never depend on it.
+      }
+
+      return nextHistory;
+    });
+  }, []);
+
+  const notifyTransferComplete = useCallback(() => {
+    if ("vibrate" in navigator) {
+      navigator.vibrate?.(80);
+    }
+
+    try {
+      const audioContext = new AudioContext();
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      oscillator.frequency.value = 660;
+      gain.gain.value = 0.025;
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.12);
+    } catch {
+      // Browsers may block audio without a recent user gesture.
+    }
+  }, []);
+
+  const handleControlMessage = useCallback(async (payload: string) => {
     const message = parseControlMessage(payload);
 
     if (!message) {
@@ -88,6 +152,9 @@ export function RoomClient({ roomId }: RoomClientProps) {
       setIncomingMetadata(message);
       setReceivedBytes(0);
       setReceivedFile(null);
+      const startedAt = Date.now();
+      setTransferStartedAt(startedAt);
+      setNow(startedAt);
       setTransferState("receiving");
       setStatusText("Receiving file...");
       setStatusTone("connected");
@@ -96,27 +163,43 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
     const metadata = metadataRef.current;
 
-    if (message.kind === "complete" && metadata) {
+    if (message.kind === "complete" && metadata && message.fileId === metadata.fileId) {
       const blob = new Blob(chunksRef.current, { type: metadata.filetype });
       const url = URL.createObjectURL(blob);
+      const hasher = await createSHA256();
 
-      if (receivedFileUrlRef.current) {
-        URL.revokeObjectURL(receivedFileUrlRef.current);
+      for (const chunk of chunksRef.current) {
+        hasher.update(new Uint8Array(chunk));
       }
 
-      receivedFileUrlRef.current = url;
-      setReceivedFile({
+      const checksum = hasher.digest("hex");
+      const verified = checksum === message.checksum;
+
+      receivedFileUrlsRef.current.push(url);
+      const nextReceivedFile = {
         url,
         name: metadata.filename,
         type: metadata.filetype,
-        size: metadata.filesize
-      });
+        size: metadata.filesize,
+        checksum,
+        verified
+      };
+
+      setReceivedFile(nextReceivedFile);
+      setReceivedFiles((files) => [...files, nextReceivedFile]);
       setReceivedBytes(metadata.filesize);
       setTransferState("complete");
-      setStatusText("Transfer complete");
+      setStatusText(verified ? "Transfer complete" : "Transfer complete, checksum mismatch");
       setStatusTone("complete");
+      addRecentTransfer({
+        name: metadata.filename,
+        size: metadata.filesize,
+        direction: "received",
+        completedAt: new Date().toISOString()
+      });
+      notifyTransferComplete();
     }
-  }, []);
+  }, [addRecentTransfer, notifyTransferComplete]);
 
   const wireDataChannel = useCallback(
     (channel: RTCDataChannel) => {
@@ -140,7 +223,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
       channel.onmessage = (event) => {
         if (typeof event.data === "string") {
-          handleControlMessage(event.data);
+          void handleControlMessage(event.data);
           return;
         }
 
@@ -159,7 +242,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
     async function startRoom() {
       try {
-        const ably = createAblyClient(clientId);
+        const ably = createAblyClient(clientId, roomId);
         const channel = ably.channels.get(`room:${roomId}`);
 
         const publishSignal = async (signal: DriftSignal) => {
@@ -217,7 +300,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
             }
 
             if (state === "failed" || state === "disconnected") {
-              setStatusText("Peer link interrupted");
+              setStatusText("Device link interrupted");
               setStatusTone("error");
             }
           },
@@ -234,6 +317,12 @@ export function RoomClient({ roomId }: RoomClientProps) {
           if (member.clientId !== clientId && roleRef.current === "sender") {
             void makeOffer().catch(() => setError("Could not create offer."));
           }
+
+          void channel.presence.get().then((presenceMembers) => {
+            if (presenceMembers.length > 2 && roleRef.current) {
+              setError("This room already has two devices. Ask extra visitors to close the tab.");
+            }
+          });
         });
 
         await channel.presence.enter({ joinedAt: Date.now() });
@@ -243,6 +332,26 @@ export function RoomClient({ roomId }: RoomClientProps) {
           const bJoinedAt = Number(b.data?.joinedAt ?? 0);
           return aJoinedAt - bJoinedAt;
         });
+        const currentMemberIndex = sortedMembers.findIndex(
+          (member) => member.clientId === clientId
+        );
+
+        if (currentMemberIndex > 1) {
+          setRoomFull(true);
+          setStatusText("Room already has two devices");
+          setStatusTone("error");
+          setError("This transfer room is full. Start a fresh room to send files.");
+          await channel.presence.leave();
+          return () => {
+            disposed = true;
+            channel.unsubscribe();
+            channel.presence.unsubscribe();
+            dataChannelRef.current?.close();
+            peer.close();
+            ably.close();
+          };
+        }
+
         const firstClientId = sortedMembers[0]?.clientId;
         const nextRole: Role = firstClientId === clientId ? "sender" : "receiver";
 
@@ -327,14 +436,31 @@ export function RoomClient({ roomId }: RoomClientProps) {
   }, [clientId, roomId, wireDataChannel]);
 
   useEffect(() => {
+    const receivedFileUrls = receivedFileUrlsRef.current;
+
     return () => {
-      if (receivedFileUrlRef.current) {
-        URL.revokeObjectURL(receivedFileUrlRef.current);
+      for (const url of receivedFileUrls) {
+        URL.revokeObjectURL(url);
       }
     };
   }, []);
 
-  const sendSelectedFile = useCallback(async (file: File) => {
+  useEffect(() => {
+    if (
+      transferState !== "sending" &&
+      transferState !== "receiving"
+    ) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [transferState]);
+
+  const sendSelectedFiles = useCallback(async (files: File[]) => {
     const channel = dataChannelRef.current;
 
     if (!channel || channel.readyState !== "open") {
@@ -345,16 +471,37 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
     try {
       setError("");
-      setSelectedFile(file);
+      setSelectedFiles(files);
       setSentBytes(0);
+      setCurrentFileIndex(0);
+      const startedAt = Date.now();
+      setTransferStartedAt(startedAt);
+      setNow(startedAt);
       setTransferState("sending");
       setStatusText("Sending file...");
       setStatusTone("connected");
-      await sendFileOverDataChannel(file, channel, setSentBytes);
-      setSentBytes(file.size);
+
+      let completedBytes = 0;
+
+      for (const [index, file] of files.entries()) {
+        setCurrentFileIndex(index);
+        await sendFileOverDataChannel(file, channel, (fileSentBytes) => {
+          setSentBytes(completedBytes + fileSentBytes);
+        });
+        completedBytes += file.size;
+        setSentBytes(completedBytes);
+        addRecentTransfer({
+          name: file.name,
+          size: file.size,
+          direction: "sent",
+          completedAt: new Date().toISOString()
+        });
+      }
+
       setTransferState("complete");
       setStatusText("Transfer complete");
       setStatusTone("complete");
+      notifyTransferComplete();
     } catch (transferError) {
       setStatusText("Transfer failed");
       setStatusTone("error");
@@ -364,7 +511,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
           : "The transfer could not be completed."
       );
     }
-  }, []);
+  }, [addRecentTransfer, notifyTransferComplete]);
 
   async function copyInviteLink() {
     if (!shareLink) {
@@ -376,30 +523,46 @@ export function RoomClient({ roomId }: RoomClientProps) {
     window.setTimeout(() => setCopied(false), 1600);
   }
 
-  function handleFileSelected(file: File) {
+  function handleFilesSelected(files: File[]) {
     setError("");
-    setSelectedFile(file);
+    setSelectedFiles(files);
+    setCurrentFileIndex(0);
     setSentBytes(0);
+    setTransferStartedAt(null);
     setTransferState("idle");
 
     if (!channelOpen) {
-      setStatusText("File ready. Waiting for another device...");
+      setStatusText("Files ready. Waiting for another device...");
       setStatusTone("waiting");
       return;
     }
 
-    setStatusText("File ready to send");
+    setStatusText(files.length > 1 ? "Files ready to send" : "File ready to send");
     setStatusTone("connected");
   }
 
   const activeFileSize =
-    role === "sender" ? selectedFile?.size ?? 0 : incomingMetadata?.filesize ?? 0;
+    role === "sender"
+      ? selectedFiles.reduce((total, file) => total + file.size, 0)
+      : incomingMetadata?.filesize ?? 0;
   const activeBytes = role === "sender" ? sentBytes : receivedBytes;
   const progress = activeFileSize
     ? Math.min(100, Math.round((activeBytes / activeFileSize) * 100))
     : 0;
   const activeFileName =
-    role === "sender" ? selectedFile?.name : incomingMetadata?.filename;
+    role === "sender"
+      ? selectedFiles.length > 1
+        ? `${selectedFiles.length} files selected`
+        : selectedFiles[0]?.name
+      : incomingMetadata?.filename;
+  const elapsedSeconds = transferStartedAt
+    ? Math.max(((now || transferStartedAt) - transferStartedAt) / 1000, 0.001)
+    : 0;
+  const speedBytesPerSecond = activeBytes > 0 ? activeBytes / elapsedSeconds : 0;
+  const remainingBytes = Math.max(activeFileSize - activeBytes, 0);
+  const etaSeconds = speedBytesPerSecond
+    ? remainingBytes / speedBytesPerSecond
+    : 0;
 
   return (
     <main className="relative min-h-screen overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
@@ -455,6 +618,19 @@ export function RoomClient({ roomId }: RoomClientProps) {
               </button>
             </div>
 
+            <InviteQrCode value={shareLink} />
+
+            <div className="mt-4 rounded-3xl border border-violet-300/15 bg-violet-300/10 p-4">
+              <p className="mb-2 text-xs uppercase tracking-[0.24em] text-violet-100">
+                🧬 Verify both devices
+              </p>
+              <p className="text-2xl font-semibold text-white">{verificationCode}</p>
+              <p className="mt-2 text-sm leading-6 text-mist">
+                Both screens should show the same code before you send anything
+                sensitive.
+              </p>
+            </div>
+
             <div className="mt-6 grid gap-3 text-sm text-mist">
               <div className="premium-card flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4">
                 <span>🎭 Your role</span>
@@ -484,6 +660,27 @@ export function RoomClient({ roomId }: RoomClientProps) {
                 {error}
               </div>
             ) : null}
+
+            {recentTransfers.length ? (
+              <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-4">
+                <p className="mb-3 text-xs uppercase tracking-[0.24em] text-mist">
+                  🕘 Local history
+                </p>
+                <div className="grid gap-2">
+                  {recentTransfers.map((transfer) => (
+                    <div
+                      className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.035] p-3 text-sm"
+                      key={`${transfer.direction}-${transfer.name}-${transfer.completedAt}`}
+                    >
+                      <span className="truncate text-white">{transfer.name}</span>
+                      <span className="shrink-0 text-mist">
+                        {transfer.direction} · {formatBytes(transfer.size)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </aside>
 
           <section className="premium-card reveal-now rounded-[2rem] border border-white/10 bg-white/[0.055] p-6 shadow-glow backdrop-blur-2xl">
@@ -506,26 +703,26 @@ export function RoomClient({ roomId }: RoomClientProps) {
             </div>
 
             <DropZone
-              disabled={role !== "sender" || transferState === "sending"}
+              disabled={roomFull || role !== "sender" || transferState === "sending"}
               helperText={
                 role === "receiver"
                   ? "Relax. The incoming file will show up here when it drifts in."
                   : channelOpen
-                    ? "Drop a file or click Choose file. We are live."
-                    : "Choose a file now. Send unlocks when the other device connects."
+                    ? "Drop files or click Choose files. We are live."
+                    : "Choose files now. Send unlocks when the other device connects."
               }
-              onFileSelected={handleFileSelected}
+              onFilesSelected={handleFilesSelected}
               selectedFileName={activeFileName}
             />
 
-            {role === "sender" && selectedFile && transferState !== "sending" ? (
+            {role === "sender" && selectedFiles.length > 0 && transferState !== "sending" ? (
               <button
                 className="magic-button mt-4 w-full rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!channelOpen}
-                onClick={() => void sendSelectedFile(selectedFile)}
+                onClick={() => void sendSelectedFiles(selectedFiles)}
                 type="button"
               >
-                {channelOpen ? "Woosh, send file" : "Waiting for device link..."}
+                {channelOpen ? "Woosh, send files" : "Waiting for device link..."}
               </button>
             ) : null}
 
@@ -548,16 +745,58 @@ export function RoomClient({ roomId }: RoomClientProps) {
               {activeFileName ? (
                 <p className="mt-4 text-sm text-white">{activeFileName}</p>
               ) : null}
+              <div className="mt-4 grid gap-3 text-sm text-mist sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                  <span className="block text-xs uppercase tracking-[0.18em]">
+                    Speed
+                  </span>
+                  <span className="mt-1 block text-white">
+                    {speedBytesPerSecond
+                      ? `${formatBytes(speedBytesPerSecond)}/s`
+                      : "Waiting"}
+                  </span>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                  <span className="block text-xs uppercase tracking-[0.18em]">
+                    ETA
+                  </span>
+                  <span className="mt-1 block text-white">
+                    {transferState === "sending" || transferState === "receiving"
+                      ? formatDuration(etaSeconds)
+                      : "Ready"}
+                  </span>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                  <span className="block text-xs uppercase tracking-[0.18em]">
+                    Check
+                  </span>
+                  <span className="mt-1 block text-white">
+                    {receivedFile
+                      ? receivedFile.verified
+                        ? "Verified"
+                        : "Mismatch"
+                      : role === "sender"
+                        ? `File ${Math.min(currentFileIndex + 1, selectedFiles.length || 1)}`
+                        : "Pending"}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {receivedFile ? (
-              <a
-                className="magic-button mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5"
-                download={receivedFile.name}
-                href={receivedFile.url}
-              >
-                Download file
-              </a>
+            {receivedFiles.length ? (
+              <div className="mt-6 grid gap-3">
+                {receivedFiles.map((file) => (
+                  <a
+                    className="magic-button inline-flex w-full items-center justify-between rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5"
+                    download={file.name}
+                    href={file.url}
+                    key={`${file.name}-${file.checksum}`}
+                  >
+                    <span>Download {file.name}</span>
+                    <span>{file.verified ? "Verified" : "Check failed"}</span>
+                  </a>
+                ))}
+              </div>
             ) : null}
           </section>
         </section>

@@ -6,24 +6,26 @@ type DropZoneProps = {
   disabled?: boolean;
   helperText?: string;
   selectedFileName?: string;
-  onFileSelected: (file: File) => void;
+  onFilesSelected: (files: File[]) => void;
 };
 
 export function DropZone({
   disabled = false,
   helperText,
   selectedFileName,
-  onFileSelected
+  onFilesSelected
 }: DropZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  function acceptFile(file?: File) {
-    if (!file || disabled) {
+  function acceptFiles(fileList?: FileList | File[]) {
+    const files = Array.from(fileList ?? []);
+
+    if (!files.length || disabled) {
       return;
     }
 
-    onFileSelected(file);
+    onFilesSelected(files);
   }
 
   return (
@@ -46,7 +48,7 @@ export function DropZone({
       onDrop={(event) => {
         event.preventDefault();
         setIsDragging(false);
-        acceptFile(event.dataTransfer.files[0]);
+        acceptFiles(event.dataTransfer.files);
       }}
       onKeyDown={(event) => {
         if (!disabled && (event.key === "Enter" || event.key === " ")) {
@@ -59,7 +61,8 @@ export function DropZone({
       <input
         className="hidden"
         disabled={disabled}
-        onChange={(event) => acceptFile(event.target.files?.[0])}
+        multiple
+        onChange={(event) => acceptFiles(event.target.files ?? undefined)}
         ref={inputRef}
         type="file"
       />
@@ -67,13 +70,13 @@ export function DropZone({
         <div className="h-full w-full rounded-2xl bg-gradient-to-br from-driftBlue to-driftViolet opacity-80" />
       </div>
       <p className="text-lg font-medium text-white">
-        {selectedFileName || "Drop your file here"}
+        {selectedFileName || (isDragging ? "Drop to drift" : "Drop your files here")}
       </p>
       <p className="mt-2 text-sm text-mist">
         {helperText ??
           (disabled
             ? "Waiting for the other device."
-            : "Drop a file or click to choose one.")}
+            : "Drop files or click to choose.")}
       </p>
       <button
         className="magic-button mt-6 rounded-full border border-white/15 bg-white px-5 py-2.5 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
@@ -84,7 +87,7 @@ export function DropZone({
         }}
         type="button"
       >
-        Choose file
+        Choose files
       </button>
     </div>
   );

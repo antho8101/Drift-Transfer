@@ -20,6 +20,8 @@ Report vulnerabilities privately to the maintainer with:
 - Files should never be uploaded to Drift Transfer servers.
 - Ably should only be used for signaling messages.
 - Do not commit API keys, `.env`, or credentials.
-- Treat `NEXT_PUBLIC_ABLY_API_KEY` as public because it is exposed to the browser.
+- Prefer server-side `ABLY_API_KEY` with `/api/ably-token` for public deployments.
+- Treat any `NEXT_PUBLIC_*` key as public because it is exposed to the browser.
+- WebRTC may reveal network information to the connected peer; this is inherent to direct browser-to-browser transfer.
 
-For production-scale public use, scoped Ably token authentication is recommended.
+For production-scale public use, scoped Ably token authentication is recommended and already supported by the app.

@@ -148,7 +148,8 @@ npm install
 Create `.env` in the project root:
 
 ```env
-NEXT_PUBLIC_ABLY_API_KEY=your_ably_api_key_here
+ABLY_API_KEY=your_ably_api_key_here
+NEXT_PUBLIC_SITE_URL=https://drift-transfer.com
 ```
 
 ### 4. Run Locally
@@ -170,7 +171,7 @@ Drift Transfer needs Ably only to exchange WebRTC signaling messages.
 5. Add it to `.env`:
 
 ```env
-NEXT_PUBLIC_ABLY_API_KEY=your_ably_api_key_here
+ABLY_API_KEY=your_ably_api_key_here
 ```
 
 Required Ably capabilities:
@@ -179,7 +180,9 @@ Required Ably capabilities:
 - `subscribe`
 - `presence`
 
-For this MVP, the browser reads `NEXT_PUBLIC_ABLY_API_KEY` directly. That means the key should be treated as public. For a larger production launch, scoped token authentication from a server route would be a better security model.
+Drift Transfer now uses a server token route at `/api/ably-token`, so the browser does not need the raw Ably API key. For local development and Vercel, keep the real key in `ABLY_API_KEY`.
+
+`NEXT_PUBLIC_ABLY_API_KEY` is still supported as a fallback for quick demos, but it is not recommended for public production use.
 
 ## 📦 File Transfer Details
 
@@ -187,16 +190,26 @@ The transfer layer is intentionally simple:
 
 - DataChannel name: `file-transfer`
 - Chunk size: `256 KB`
+- Multi-file transfers are sent sequentially.
 - Metadata sent before chunks:
+  - fileId
   - filename
   - filetype
   - filesize
+- Completion messages include a SHA-256 checksum.
 - Backpressure handling:
   - the sender watches `dataChannel.bufferedAmount`
   - sending pauses when the buffer is too full
   - sending resumes when `bufferedamountlow` fires
+- The room UI shows speed, ETA, checksum verification, and local transfer history.
 
 This keeps the MVP understandable while still making it practical for large files.
+
+## 🔐 Connection Trust
+
+Each room displays a short verification phrase, such as `calm-violet-42`. Both devices should show the same phrase before sending sensitive files.
+
+Rooms are designed for two devices. If a third device joins, the app warns that the room is full and asks the extra visitor to leave or start a new room.
 
 ## 🔐 Privacy Model
 
@@ -220,7 +233,8 @@ The file exists in the sender browser, travels through the WebRTC DataChannel, t
 3. Add the environment variable:
 
 ```env
-NEXT_PUBLIC_ABLY_API_KEY=your_ably_api_key_here
+ABLY_API_KEY=your_ably_api_key_here
+NEXT_PUBLIC_SITE_URL=https://drift-transfer.com
 ```
 
 4. Deploy.
@@ -234,33 +248,32 @@ npm run dev
 npm run lint
 npm run build
 npm run start
+npm run test:e2e
 ```
 
 ## ⚠️ Known Limitations
 
 Drift Transfer is currently an MVP. Some limitations are expected:
 
-- Some restrictive networks may require a TURN server.
+- Some restrictive networks may require a TURN server. Optional TURN variables are supported:
+  - `NEXT_PUBLIC_TURN_URL`
+  - `NEXT_PUBLIC_TURN_USERNAME`
+  - `NEXT_PUBLIC_TURN_CREDENTIAL`
 - Transfers stop if either browser tab is closed.
 - Resume and partial retry are not included yet.
 - Very large transfers depend on browser memory and network stability.
-- Public Ably keys are acceptable for the MVP but token auth is better for serious production scale.
 - Mobile browsers may behave differently with background tabs and long transfers.
 
 ## 🗺️ Roadmap Ideas
 
 Possible future improvements:
 
-- 🧭 Optional TURN server configuration
 - 🔁 Transfer resume experiments
-- 🧩 Multi-file transfers
 - 📱 Better mobile transfer states
 - 🧯 More detailed connection troubleshooting
-- 🔐 Ably token authentication
-- 📊 Transfer speed and ETA
 - ♿ Accessibility improvements
 - 🌍 Internationalization
-- 🧪 Automated WebRTC flow testing
+- 🧪 Deeper automated room-to-room transfer testing
 
 ## 🤝 Contributing
 

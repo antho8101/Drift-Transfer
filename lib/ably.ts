@@ -1,15 +1,19 @@
 import Ably from "ably";
 
-export function createAblyClient(clientId: string) {
+export function createAblyClient(clientId: string, roomId: string) {
   const key = process.env.NEXT_PUBLIC_ABLY_API_KEY;
 
-  if (!key) {
-    throw new Error("NEXT_PUBLIC_ABLY_API_KEY is missing.");
+  if (key) {
+    return new Ably.Realtime({
+      key,
+      clientId,
+      closeOnUnload: true
+    });
   }
 
   return new Ably.Realtime({
-    key,
     clientId,
+    authUrl: `/api/ably-token?roomId=${encodeURIComponent(roomId)}&clientId=${encodeURIComponent(clientId)}`,
     closeOnUnload: true
   });
 }
