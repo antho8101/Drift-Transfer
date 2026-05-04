@@ -28,12 +28,13 @@
   },
   "dependencies": {
     "@remixicon/react": "^4.9.0",
+    "@vercel/analytics": "^2.0.1",
     "ably": "latest",
     "hash-wasm": "^4.12.0",
-    "next": "latest",
+    "next": "^16.2.4",
     "qrcode": "^1.5.4",
-    "react": "latest",
-    "react-dom": "latest"
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Sora } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { siteConfig } from "@/lib/site";
@@ -81,6 +82,7 @@ export default function RootLayout({
             <LanguageSwitcher />
           </div>
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
