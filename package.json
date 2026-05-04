@@ -27,6 +27,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@remixicon/react": "^4.9.0",
     "ably": "latest",
     "hash-wasm": "^4.12.0",
     "next": "latest",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { RoomClient } from "@/components/RoomClient";
 import { isValidRoomId } from "@/lib/utils";
 
@@ -30,5 +31,9 @@ export default async function RoomPage({ params }: RoomPageProps) {
     notFound();
   }
 
-  return <RoomClient roomId={roomId} />;
+  return (
+    <Suspense fallback={null}>
+      <RoomClient roomId={roomId} />
+    </Suspense>
+  );
 }

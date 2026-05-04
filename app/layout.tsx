@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { LanguageProvider } from "@/components/LanguageProvider";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { siteConfig } from "@/lib/site";
 import "./globals.css";
 
@@ -65,7 +67,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <LanguageProvider>
+          {children}
+          <div className="fixed bottom-4 right-4 z-50 sm:bottom-5 sm:right-5">
+            <LanguageSwitcher />
+          </div>
+        </LanguageProvider>
+      </body>
     </html>
   );
 }

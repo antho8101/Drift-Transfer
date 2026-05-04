@@ -1,7 +1,15 @@
 "use client";
 
+import {
+  RiDownloadLine,
+  RiGithubFill,
+  RiHeart3Line,
+  RiLink,
+  RiSendPlaneLine
+} from "@remixicon/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createSHA256 } from "hash-wasm";
 import {
   useCallback,
@@ -27,12 +35,32 @@ import {
 } from "@/lib/fileTransfer";
 import { DropZone } from "@/components/DropZone";
 import { InviteQrCode } from "@/components/InviteQrCode";
+import { useTranslations } from "@/components/LanguageProvider";
 import { ProgressBar } from "@/components/ProgressBar";
+import { SmartNav } from "@/components/SmartNav";
 import { StatusBadge } from "@/components/StatusBadge";
 import { createVerificationCode, formatBytes, formatDuration } from "@/lib/utils";
 
 type Role = "sender" | "receiver" | null;
+type IntentRole = "send" | "receive";
 type TransferState = "idle" | "sending" | "receiving" | "complete";
+type RoomStatusKey =
+  | "preparing"
+  | "receiving"
+  | "complete"
+  | "checksumMismatch"
+  | "secureLink"
+  | "connecting"
+  | "interrupted"
+  | "fullStatus"
+  | "waitingDevice"
+  | "joining"
+  | "answering"
+  | "setupFailed"
+  | "filesReadyWaiting"
+  | "filesReadyPlural"
+  | "filesReadySingular"
+  | "sendingFile";
 
 type RoomClientProps = {
   roomId: string;
@@ -55,6 +83,9 @@ type RecentTransfer = {
 };
 
 export function RoomClient({ roomId }: RoomClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const t = useTranslations();
   const clientId = useMemo(() => crypto.randomUUID(), []);
   const origin = useSyncExternalStore(
     () => () => undefined,
@@ -63,7 +94,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
   );
   const [role, setRole] = useState<Role>(null);
   const [copied, setCopied] = useState(false);
-  const [statusText, setStatusText] = useState("Preparing room...");
+  const [statusKey, setStatusKey] = useState<RoomStatusKey>("preparing");
   const [statusTone, setStatusTone] =
     useState<"idle" | "waiting" | "connected" | "error" | "complete">("idle");
   const [error, setError] = useState("");
@@ -95,14 +126,22 @@ export function RoomClient({ roomId }: RoomClientProps) {
   const [roomFull, setRoomFull] = useState(false);
 
   const roleRef = useRef<Role>(null);
+  const tRef = useRef(t);
   const peerRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const chunksRef = useRef<ArrayBuffer[]>([]);
   const metadataRef = useRef<FileMetadata | null>(null);
   const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
   const receivedFileUrlsRef = useRef<string[]>([]);
-  const shareLink = origin ? `${origin}/room/${roomId}` : "";
+  const requestedRole = searchParams.get("role");
+  const intentRole: IntentRole = requestedRole === "send" ? "send" : "receive";
+  const shareLink = origin ? `${origin}/room/${roomId}?role=receive` : "";
   const verificationCode = createVerificationCode(roomId);
+  const statusText = t.room[statusKey];
+
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
   const addRecentTransfer = useCallback((transfer: RecentTransfer) => {
     setRecentTransfers((history) => {
@@ -156,7 +195,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
       setTransferStartedAt(startedAt);
       setNow(startedAt);
       setTransferState("receiving");
-      setStatusText("Receiving file...");
+      setStatusKey("receiving");
       setStatusTone("connected");
       return;
     }
@@ -189,7 +228,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
       setReceivedFiles((files) => [...files, nextReceivedFile]);
       setReceivedBytes(metadata.filesize);
       setTransferState("complete");
-      setStatusText(verified ? "Transfer complete" : "Transfer complete, checksum mismatch");
+      setStatusKey(verified ? "complete" : "checksumMismatch");
       setStatusTone("complete");
       addRecentTransfer({
         name: metadata.filename,
@@ -208,7 +247,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
       channel.onopen = () => {
         setChannelOpen(true);
-        setStatusText("Secure device link established");
+        setStatusKey("secureLink");
         setStatusTone("connected");
       };
 
@@ -217,7 +256,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
       };
 
       channel.onerror = () => {
-        setError("The file channel reported an error.");
+        setError(tRef.current.room.channelError);
         setStatusTone("error");
       };
 
@@ -272,7 +311,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
           }
 
           offerSent = true;
-          setStatusText("Connecting to the other device...");
+          setStatusKey("connecting");
           setStatusTone("waiting");
 
           // The data channel must exist before the offer so the receiver gets it
@@ -291,16 +330,16 @@ export function RoomClient({ roomId }: RoomClientProps) {
               type: "ice-candidate",
               from: clientId,
               candidate
-            }).catch(() => setError("Could not publish an ICE candidate."));
+            }).catch(() => setError(tRef.current.room.publishIceError));
           },
           onConnectionStateChange: (state) => {
             if (state === "connected") {
-              setStatusText("Secure device link established");
+              setStatusKey("secureLink");
               setStatusTone("connected");
             }
 
             if (state === "failed" || state === "disconnected") {
-              setStatusText("Device link interrupted");
+              setStatusKey("interrupted");
               setStatusTone("error");
             }
           },
@@ -315,12 +354,12 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
         channel.presence.subscribe("enter", (member) => {
           if (member.clientId !== clientId && roleRef.current === "sender") {
-            void makeOffer().catch(() => setError("Could not create offer."));
+            void makeOffer().catch(() => setError(tRef.current.room.setupError));
           }
 
           void channel.presence.get().then((presenceMembers) => {
             if (presenceMembers.length > 2 && roleRef.current) {
-              setError("This room already has two devices. Ask extra visitors to close the tab.");
+              setError(tRef.current.room.fullEnter);
             }
           });
         });
@@ -338,9 +377,9 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
         if (currentMemberIndex > 1) {
           setRoomFull(true);
-          setStatusText("Room already has two devices");
+          setStatusKey("fullStatus");
           setStatusTone("error");
-          setError("This transfer room is full. Start a fresh room to send files.");
+          setError(tRef.current.room.fullError);
           await channel.presence.leave();
           return () => {
             disposed = true;
@@ -359,14 +398,14 @@ export function RoomClient({ roomId }: RoomClientProps) {
         setRole(nextRole);
 
         if (nextRole === "sender") {
-          setStatusText("Waiting for another device...");
+          setStatusKey("waitingDevice");
           setStatusTone("waiting");
 
           if (sortedMembers.length > 1) {
             await makeOffer();
           }
         } else {
-          setStatusText("Joining device link...");
+          setStatusKey("joining");
           setStatusTone("waiting");
           await publishSignal({ type: "peer-ready", from: clientId });
         }
@@ -382,7 +421,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
           }
 
           if (signal.type === "offer" && roleRef.current === "receiver") {
-            setStatusText("Answering device link...");
+            setStatusKey("answering");
             const answer = await createAnswer(peer, signal.sdp);
             await publishSignal({ type: "answer", from: clientId, sdp: answer });
             await flushIceCandidates();
@@ -414,12 +453,12 @@ export function RoomClient({ roomId }: RoomClientProps) {
           ably.close();
         };
       } catch (roomError) {
-        setStatusText("Room setup failed");
+        setStatusKey("setupFailed");
         setStatusTone("error");
         setError(
           roomError instanceof Error
             ? roomError.message
-            : "Could not initialize the room."
+            : tRef.current.room.setupError
         );
       }
     }
@@ -464,7 +503,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
     const channel = dataChannelRef.current;
 
     if (!channel || channel.readyState !== "open") {
-      setStatusText("Waiting for another device...");
+      setStatusKey("waitingDevice");
       setStatusTone("waiting");
       return;
     }
@@ -478,7 +517,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
       setTransferStartedAt(startedAt);
       setNow(startedAt);
       setTransferState("sending");
-      setStatusText("Sending file...");
+      setStatusKey("sendingFile");
       setStatusTone("connected");
 
       let completedBytes = 0;
@@ -499,16 +538,16 @@ export function RoomClient({ roomId }: RoomClientProps) {
       }
 
       setTransferState("complete");
-      setStatusText("Transfer complete");
+      setStatusKey("complete");
       setStatusTone("complete");
       notifyTransferComplete();
     } catch (transferError) {
-      setStatusText("Transfer failed");
+      setStatusKey("setupFailed");
       setStatusTone("error");
       setError(
         transferError instanceof Error
           ? transferError.message
-          : "The transfer could not be completed."
+          : tRef.current.room.transferError
       );
     }
   }, [addRecentTransfer, notifyTransferComplete]);
@@ -532,27 +571,36 @@ export function RoomClient({ roomId }: RoomClientProps) {
     setTransferState("idle");
 
     if (!channelOpen) {
-      setStatusText("Files ready. Waiting for another device...");
+      setStatusKey("filesReadyWaiting");
       setStatusTone("waiting");
       return;
     }
 
-    setStatusText(files.length > 1 ? "Files ready to send" : "File ready to send");
+    setStatusKey(files.length > 1 ? "filesReadyPlural" : "filesReadySingular");
     setStatusTone("connected");
   }
 
+  function switchIntentRole(nextRole: IntentRole) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("role", nextRole);
+    router.replace(`/room/${roomId}?${params.toString()}`, { scroll: false });
+  }
+
+  const isOutgoingTransferView =
+    transferState === "sending" ||
+    (transferState !== "receiving" && intentRole === "send");
   const activeFileSize =
-    role === "sender"
+    isOutgoingTransferView
       ? selectedFiles.reduce((total, file) => total + file.size, 0)
       : incomingMetadata?.filesize ?? 0;
-  const activeBytes = role === "sender" ? sentBytes : receivedBytes;
+  const activeBytes = isOutgoingTransferView ? sentBytes : receivedBytes;
   const progress = activeFileSize
     ? Math.min(100, Math.round((activeBytes / activeFileSize) * 100))
     : 0;
   const activeFileName =
-    role === "sender"
+    isOutgoingTransferView
       ? selectedFiles.length > 1
-        ? `${selectedFiles.length} files selected`
+        ? `${selectedFiles.length} ${t.room.filesSelected}`
         : selectedFiles[0]?.name
       : incomingMetadata?.filename;
   const elapsedSeconds = transferStartedAt
@@ -563,16 +611,29 @@ export function RoomClient({ roomId }: RoomClientProps) {
   const etaSeconds = speedBytesPerSecond
     ? remainingBytes / speedBytesPerSecond
     : 0;
+  const canChooseFiles = !roomFull && intentRole === "send";
+  const roleLabel =
+    intentRole === "send" ? t.room.sendingMode : t.room.receivingMode;
+  const roleDescription =
+    intentRole === "send"
+      ? t.room.sendingDescription
+      : t.room.receivingDescription;
+  const technicalRoleDescription =
+    role === "sender"
+      ? t.room.firstDevice
+      : role === "receiver"
+        ? t.room.secondDevice
+        : t.room.detectingOrder;
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
-      <div className="grain-overlay pointer-events-none absolute inset-0" />
-      <div className="ambient-grid pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:72px_72px] opacity-20" />
-      <div className="ambient-orb-alt pointer-events-none absolute right-[-8rem] top-[-8rem] h-[28rem] w-[28rem] rounded-full bg-driftViolet/10 blur-3xl" />
-      <div className="ambient-orb pointer-events-none absolute bottom-[-12rem] left-[-10rem] h-[30rem] w-[30rem] rounded-full bg-driftBlue/10 blur-3xl" />
+    <main className="isolate relative min-h-screen overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
+      <div className="grain-overlay pointer-events-none absolute inset-0 z-0" />
+      <div className="ambient-grid pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:72px_72px] opacity-20" />
+      <div className="ambient-orb-alt pointer-events-none absolute right-[-8rem] top-[-8rem] z-0 h-[28rem] w-[28rem] rounded-full bg-driftViolet/10 blur-3xl" />
+      <div className="ambient-orb pointer-events-none absolute bottom-[-12rem] left-[-10rem] z-0 h-[30rem] w-[30rem] rounded-full bg-driftBlue/10 blur-3xl" />
 
-      <div className="relative mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl flex-col">
-        <header className="reveal-now mb-8 flex flex-col gap-4 rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl flex-col">
+        <SmartNav className="reveal-now mb-8 flex flex-col gap-4 rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
           <Link className="flex items-center gap-3" href="/">
             <Image
               alt="Drift Transfer logo"
@@ -585,8 +646,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
               DRIFT TRANSFER
             </span>
           </Link>
-          <StatusBadge tone={statusTone}>{statusText}</StatusBadge>
-        </header>
+          <div className="flex flex-wrap items-center gap-3">
+            <StatusBadge tone={statusTone}>{statusText}</StatusBadge>
+          </div>
+        </SmartNav>
 
         <section className="grid flex-1 gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <aside className="premium-card reveal-now rounded-[2rem] border border-white/10 bg-white/[0.055] p-6 shadow-glow backdrop-blur-2xl">
@@ -594,19 +657,48 @@ export function RoomClient({ roomId }: RoomClientProps) {
               🚪 Room {roomId}
             </p>
             <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-white">
-              Invite a friend. Let the file drift.
+              {t.room.heading}
             </h1>
             <p className="mt-4 text-sm leading-6 text-mist">
-              Share this link with exactly one other device. We set up the
-              private browser link, then your file moves directly across.
+              {t.room.description}
             </p>
+
+            <div className="mt-6 rounded-3xl border border-driftBlue/15 bg-driftBlue/10 p-4">
+              <p className="mb-2 text-xs uppercase tracking-[0.24em] text-sky-100">
+                {t.room.thisDevice}
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-2xl font-semibold text-white">{roleLabel}</p>
+                  <p className="mt-1 text-sm leading-6 text-mist">
+                    {roleDescription}
+                  </p>
+                </div>
+                <button
+                  className="magic-button rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
+                  onClick={() =>
+                    switchIntentRole(intentRole === "send" ? "receive" : "send")
+                  }
+                  type="button"
+                >
+                  {t.room.switchTo}{" "}
+                  {intentRole === "send" ? t.room.receive : t.room.send}
+                </button>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-mist">
+                {technicalRoleDescription}
+              </p>
+            </div>
 
             <div className="premium-card mt-8 rounded-3xl border border-white/10 bg-black/20 p-4">
               <p className="mb-2 text-xs uppercase tracking-[0.24em] text-mist">
-                🔗 Invite link
+                <span className="inline-flex items-center gap-2">
+                  <RiLink aria-hidden className="h-[22px] w-[22px]" />
+                  {t.room.inviteLink}
+                </span>
               </p>
               <div className="break-all rounded-2xl bg-white/5 p-3 text-sm text-white">
-                {shareLink || "Preparing link..."}
+                {shareLink || t.room.preparingLink}
               </div>
               <button
                 className="magic-button mt-3 w-full rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:opacity-60"
@@ -614,7 +706,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
                 onClick={copyInviteLink}
                 type="button"
               >
-                {copied ? "Copied. Go make magic." : "Copy invite link"}
+                <span className="inline-flex items-center justify-center gap-2">
+                  <RiLink aria-hidden className="h-[22px] w-[22px]" />
+                  {copied ? t.room.copied : t.room.copyInvite}
+                </span>
               </button>
             </div>
 
@@ -622,37 +717,31 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
             <div className="mt-4 rounded-3xl border border-violet-300/15 bg-violet-300/10 p-4">
               <p className="mb-2 text-xs uppercase tracking-[0.24em] text-violet-100">
-                🧬 Verify both devices
+                {t.room.verify}
               </p>
               <p className="text-2xl font-semibold text-white">{verificationCode}</p>
               <p className="mt-2 text-sm leading-6 text-mist">
-                Both screens should show the same code before you send anything
-                sensitive.
+                {t.room.verifyText}
               </p>
             </div>
 
             <div className="mt-6 grid gap-3 text-sm text-mist">
               <div className="premium-card flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                <span>🎭 Your role</span>
+                <span>{t.room.yourRole}</span>
                 <span className="font-medium text-white">
-                  {role === "sender"
-                    ? "Sender"
-                    : role === "receiver"
-                      ? "Receiver"
-                      : "Detecting..."}
+                  {intentRole === "send" ? t.room.sendRole : t.room.receiveRole}
                 </span>
               </div>
               <div className="premium-card flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                <span>⚡ File channel</span>
+                <span>{t.room.fileChannel}</span>
                 <span className="font-medium text-white">
-                  {channelOpen ? "Open and ready" : "Warming up"}
+                  {channelOpen ? t.room.openReady : t.room.warmingUp}
                 </span>
               </div>
             </div>
 
             <div className="mt-6 rounded-3xl border border-driftBlue/15 bg-driftBlue/10 p-4 text-sm leading-6 text-sky-100">
-              💡 Pro tip: keep both tabs open until the transfer is done. No
-              tab, no tunnel.
+              {t.room.tip}
             </div>
 
             {error ? (
@@ -664,7 +753,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
             {recentTransfers.length ? (
               <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-4">
                 <p className="mb-3 text-xs uppercase tracking-[0.24em] text-mist">
-                  🕘 Local history
+                  {t.room.history}
                 </p>
                 <div className="grid gap-2">
                   {recentTransfers.map((transfer) => (
@@ -674,7 +763,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
                     >
                       <span className="truncate text-white">{transfer.name}</span>
                       <span className="shrink-0 text-mist">
-                        {transfer.direction} · {formatBytes(transfer.size)}
+                        {transfer.direction === "sent"
+                          ? t.room.sentDirection
+                          : t.room.receivedDirection}{" "}
+                        · {formatBytes(transfer.size)}
                       </span>
                     </div>
                   ))}
@@ -687,14 +779,14 @@ export function RoomClient({ roomId }: RoomClientProps) {
             <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.3em] text-driftViolet">
-                  🌊 Transfer deck
+                  {t.room.transferDeck}
                 </p>
                 <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white">
                   {transferState === "complete"
-                    ? "Transfer complete. Smooth landing."
-                    : role === "receiver"
-                      ? "Ready to catch the drop"
-                      : "Drop it here and ship it"}
+                    ? t.room.completeTitle
+                    : intentRole === "receive"
+                      ? t.room.receiveTitle
+                      : t.room.sendTitle}
                 </h2>
               </div>
               <div className="rounded-full border border-white/10 px-4 py-2 text-sm text-mist">
@@ -703,26 +795,29 @@ export function RoomClient({ roomId }: RoomClientProps) {
             </div>
 
             <DropZone
-              disabled={roomFull || role !== "sender" || transferState === "sending"}
+              disabled={!canChooseFiles || transferState === "sending"}
               helperText={
-                role === "receiver"
-                  ? "Relax. The incoming file will show up here when it drifts in."
+                intentRole === "receive"
+                  ? t.room.receiveHelper
                   : channelOpen
-                    ? "Drop files or click Choose files. We are live."
-                    : "Choose files now. Send unlocks when the other device connects."
+                    ? t.room.sendHelperLive
+                    : t.room.sendHelperWaiting
               }
               onFilesSelected={handleFilesSelected}
               selectedFileName={activeFileName}
             />
 
-            {role === "sender" && selectedFiles.length > 0 && transferState !== "sending" ? (
+            {canChooseFiles && selectedFiles.length > 0 && transferState !== "sending" ? (
               <button
                 className="magic-button mt-4 w-full rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!channelOpen}
                 onClick={() => void sendSelectedFiles(selectedFiles)}
                 type="button"
               >
-                {channelOpen ? "Woosh, send files" : "Waiting for device link..."}
+                <span className="inline-flex items-center justify-center gap-2">
+                  <RiSendPlaneLine aria-hidden className="h-[22px] w-[22px]" />
+                  {channelOpen ? t.room.sendButton : t.room.waitingLink}
+                </span>
               </button>
             ) : null}
 
@@ -730,12 +825,12 @@ export function RoomClient({ roomId }: RoomClientProps) {
               <div className="mb-4 flex flex-col gap-2 text-sm text-mist sm:flex-row sm:items-center sm:justify-between">
                 <span>
                   {transferState === "sending"
-                    ? "Sending file..."
+                    ? t.room.sendingFile
                     : transferState === "receiving"
-                      ? "Receiving file..."
+                      ? t.room.receiving
                       : transferState === "complete"
-                        ? "Transfer complete"
-                        : "Waiting for the drop..."}
+                        ? t.room.complete
+                        : t.room.waitingDrop}
                 </span>
                 <span>
                   {formatBytes(activeBytes)} / {formatBytes(activeFileSize)}
@@ -748,36 +843,36 @@ export function RoomClient({ roomId }: RoomClientProps) {
               <div className="mt-4 grid gap-3 text-sm text-mist sm:grid-cols-3">
                 <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
                   <span className="block text-xs uppercase tracking-[0.18em]">
-                    Speed
+                    {t.room.speed}
                   </span>
                   <span className="mt-1 block text-white">
                     {speedBytesPerSecond
                       ? `${formatBytes(speedBytesPerSecond)}/s`
-                      : "Waiting"}
+                      : t.room.waiting}
                   </span>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
                   <span className="block text-xs uppercase tracking-[0.18em]">
-                    ETA
+                    {t.room.eta}
                   </span>
                   <span className="mt-1 block text-white">
                     {transferState === "sending" || transferState === "receiving"
                       ? formatDuration(etaSeconds)
-                      : "Ready"}
+                      : t.room.ready}
                   </span>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
                   <span className="block text-xs uppercase tracking-[0.18em]">
-                    Check
+                    {t.room.check}
                   </span>
                   <span className="mt-1 block text-white">
                     {receivedFile
                       ? receivedFile.verified
-                        ? "Verified"
-                        : "Mismatch"
-                      : role === "sender"
-                        ? `File ${Math.min(currentFileIndex + 1, selectedFiles.length || 1)}`
-                        : "Pending"}
+                        ? t.room.verified
+                        : t.room.mismatch
+                      : intentRole === "send"
+                        ? `${t.room.file} ${Math.min(currentFileIndex + 1, selectedFiles.length || 1)}`
+                        : t.room.pending}
                   </span>
                 </div>
               </div>
@@ -792,8 +887,11 @@ export function RoomClient({ roomId }: RoomClientProps) {
                     href={file.url}
                     key={`${file.name}-${file.checksum}`}
                   >
-                    <span>Download {file.name}</span>
-                    <span>{file.verified ? "Verified" : "Check failed"}</span>
+                    <span className="inline-flex items-center gap-2">
+                      <RiDownloadLine aria-hidden className="h-[22px] w-[22px]" />
+                      {t.room.download} {file.name}
+                    </span>
+                    <span>{file.verified ? t.room.verified : t.room.checkFailed}</span>
                   </a>
                 ))}
               </div>
@@ -803,7 +901,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
         <footer className="reveal-up mt-8 border-t border-white/10 py-6">
           <div className="flex flex-col gap-3 text-sm text-mist sm:flex-row sm:items-center sm:justify-between">
-            <p>Made with ❤ by Anthony. Free, open source, no accounts.</p>
+            <p>{t.common.footer}</p>
             <div className="flex flex-wrap gap-3">
               <a
                 className="transition hover:text-white"
@@ -811,7 +909,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
                 rel="noreferrer"
                 target="_blank"
               >
-                GitHub
+                <span className="inline-flex items-center gap-1.5">
+                  <RiGithubFill aria-hidden className="h-[22px] w-[22px]" />
+                  {t.common.github}
+                </span>
               </a>
               <a
                 className="transition hover:text-white"
@@ -819,9 +920,12 @@ export function RoomClient({ roomId }: RoomClientProps) {
                 rel="noreferrer"
                 target="_blank"
               >
-                Sponsor
+                <span className="inline-flex items-center gap-1.5">
+                  <RiHeart3Line aria-hidden className="h-[22px] w-[22px]" />
+                  {t.common.sponsor}
+                </span>
               </a>
-              <span>Browser-to-browser powered</span>
+              <span>{t.common.powered}</span>
             </div>
           </div>
         </footer>

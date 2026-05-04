@@ -1,16 +1,19 @@
 "use client";
 
+import { RiRocketLine } from "@remixicon/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "@/components/LanguageProvider";
 import { createRoomId } from "@/lib/utils";
 
 export function StartTransferButton() {
   const router = useRouter();
+  const t = useTranslations();
   const [isStarting, setIsStarting] = useState(false);
 
   function handleStart() {
     setIsStarting(true);
-    router.push(`/room/${createRoomId()}`);
+    router.push(`/room/${createRoomId()}?role=send`);
   }
 
   return (
@@ -21,8 +24,9 @@ export function StartTransferButton() {
       type="button"
     >
       <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-driftBlue/25 to-transparent transition duration-700 group-hover:translate-x-full" />
-      <span className="relative">
-        {isStarting ? "Opening room..." : "Start transfer"}
+      <span className="relative inline-flex items-center gap-2">
+        <RiRocketLine aria-hidden className="h-[22px] w-[22px]" />
+        {isStarting ? t.start.loading : t.start.idle}
       </span>
     </button>
   );
