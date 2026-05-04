@@ -24,6 +24,8 @@ ABLY_API_KEY=your_ably_api_key_here
 NEXT_PUBLIC_SITE_URL=https://drift-transfer.com
 ```
 
+The older `NEXT_PUBLIC_ABLY_API_KEY` name is still accepted for compatibility, but `ABLY_API_KEY` is preferred for new setups.
+
 ## ✅ Before Opening a Pull Request
 
 Run:

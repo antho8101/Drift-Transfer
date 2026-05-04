@@ -6,11 +6,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const roomId = searchParams.get("roomId") ?? "";
   const clientId = searchParams.get("clientId") ?? "";
-  const apiKey = process.env.ABLY_API_KEY;
+  const apiKey = process.env.ABLY_API_KEY ?? process.env.NEXT_PUBLIC_ABLY_API_KEY;
 
   if (!apiKey) {
     return NextResponse.json(
-      { error: "ABLY_API_KEY is missing on the server." },
+      { error: "ABLY_API_KEY or NEXT_PUBLIC_ABLY_API_KEY is missing on the server." },
       { status: 500 }
     );
   }

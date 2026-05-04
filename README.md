@@ -152,6 +152,8 @@ ABLY_API_KEY=your_ably_api_key_here
 NEXT_PUBLIC_SITE_URL=https://drift-transfer.com
 ```
 
+If your deployment already uses the older `NEXT_PUBLIC_ABLY_API_KEY` name, Drift Transfer will still accept it for compatibility. For new production deployments, prefer `ABLY_API_KEY`.
+
 ### 4. Run Locally
 
 ```bash
@@ -182,7 +184,7 @@ Required Ably capabilities:
 
 Drift Transfer now uses a server token route at `/api/ably-token`, so the browser does not need the raw Ably API key. For local development and Vercel, keep the real key in `ABLY_API_KEY`.
 
-`NEXT_PUBLIC_ABLY_API_KEY` is still supported as a fallback for quick demos, but it is not recommended for public production use.
+`NEXT_PUBLIC_ABLY_API_KEY` is still supported as a compatibility fallback, but it is not recommended for public production use.
 
 ## 📦 File Transfer Details
 

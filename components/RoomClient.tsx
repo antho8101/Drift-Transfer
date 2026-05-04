@@ -62,6 +62,18 @@ type RoomStatusKey =
   | "filesReadySingular"
   | "sendingFile";
 
+const REALTIME_SETUP_TIMEOUT_MS = 15_000;
+
+function withTimeout<T>(promise: Promise<T>, message: string) {
+  let timeoutId: ReturnType<typeof setTimeout>;
+
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), REALTIME_SETUP_TIMEOUT_MS);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
 type RoomClientProps = {
   roomId: string;
 };
@@ -283,6 +295,32 @@ export function RoomClient({ roomId }: RoomClientProps) {
       try {
         const ably = createAblyClient(clientId, roomId);
         const channel = ably.channels.get(`room:${roomId}`);
+        const handleAblyConnectionState = (stateChange: { current: string; reason?: { message?: string } }) => {
+          if (disposed) {
+            return;
+          }
+
+          if (stateChange.current === "connected") {
+            setStatusKey("joining");
+            setStatusTone("waiting");
+            return;
+          }
+
+          if (
+            stateChange.current === "failed" ||
+            stateChange.current === "suspended"
+          ) {
+            setStatusKey("setupFailed");
+            setStatusTone("error");
+            setError(
+              stateChange.reason?.message
+                ? `${tRef.current.room.realtimeError} (${stateChange.reason.message})`
+                : tRef.current.room.realtimeError
+            );
+          }
+        };
+
+        ably.connection.on(handleAblyConnectionState);
 
         const publishSignal = async (signal: DriftSignal) => {
           await channel.publish("signal", signal);
@@ -364,8 +402,17 @@ export function RoomClient({ roomId }: RoomClientProps) {
           });
         });
 
-        await channel.presence.enter({ joinedAt: Date.now() });
-        const members = await channel.presence.get();
+        setStatusKey("joining");
+        setStatusTone("waiting");
+
+        await withTimeout(
+          channel.presence.enter({ joinedAt: Date.now() }),
+          tRef.current.room.realtimeError
+        );
+        const members = await withTimeout(
+          channel.presence.get(),
+          tRef.current.room.realtimeError
+        );
         const sortedMembers = members.sort((a, b) => {
           const aJoinedAt = Number(a.data?.joinedAt ?? 0);
           const bJoinedAt = Number(b.data?.joinedAt ?? 0);
@@ -383,6 +430,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
           await channel.presence.leave();
           return () => {
             disposed = true;
+            ably.connection.off(handleAblyConnectionState);
             channel.unsubscribe();
             channel.presence.unsubscribe();
             dataChannelRef.current?.close();
@@ -445,6 +493,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
         return () => {
           disposed = true;
+          ably.connection.off(handleAblyConnectionState);
           channel.unsubscribe();
           channel.presence.unsubscribe();
           void channel.presence.leave();

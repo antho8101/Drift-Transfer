@@ -119,6 +119,8 @@ export const dictionaries = {
       answering: "Answering device link...",
       setupFailed: "Room setup failed",
       setupError: "Could not initialize the room.",
+      realtimeError:
+        "Could not reach the realtime service. Check the Ably environment variable on Vercel, then refresh both devices.",
       transferError: "The transfer could not be completed.",
       filesReadyWaiting: "Files ready. Waiting for another device...",
       filesReadyPlural: "Files ready to send",
@@ -320,6 +322,8 @@ export const dictionaries = {
       answering: "Réponse au lien privé...",
       setupFailed: "Initialisation impossible",
       setupError: "Impossible d’initialiser la room.",
+      realtimeError:
+        "Impossible de joindre le service temps réel. Vérifie la variable Ably sur Vercel, puis recharge les deux appareils.",
       transferError: "Le transfert n’a pas pu être terminé.",
       filesReadyWaiting: "Fichiers prêts. En attente d’un autre appareil...",
       filesReadyPlural: "Fichiers prêts à envoyer",
