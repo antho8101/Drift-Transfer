@@ -192,7 +192,16 @@ export default function Home() {
           price: "0",
           priceCurrency: "USD"
         },
-        featureList: t.home.features.map((feature) => feature.title),
+        featureList: [
+          ...t.home.features.map((feature) => feature.title),
+          t.home.crossDevice.title
+        ],
+        keywords: [
+          "iPhone to Windows file transfer",
+          "browser file transfer",
+          "cross-device file transfer",
+          "peer-to-peer file sharing"
+        ],
         author: {
           "@type": "Person",
           name: "Anthony",
@@ -247,7 +256,10 @@ export default function Home() {
               src={logoPath}
               width={36}
             />
-            <span className="text-sm font-medium uppercase tracking-[0.32em] text-white">
+            <span
+              className="notranslate text-sm font-medium uppercase tracking-[0.32em] text-white"
+              translate="no"
+            >
               Drift Transfer
             </span>
           </div>
@@ -369,6 +381,58 @@ export default function Home() {
                 <p className="mt-3 text-sm text-mist">
                   {t.home.mockFile}
                 </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-6 py-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div className="premium-card reveal-up rounded-[2rem] border border-white/10 bg-white/[0.045] p-7 backdrop-blur-2xl">
+            <p className="text-sm uppercase tracking-[0.3em] text-driftBlue">
+              {t.home.crossDevice.eyebrow}
+            </p>
+            <h2 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-white">
+              {t.home.crossDevice.title}
+            </h2>
+            <p className="mt-5 leading-8 text-mist">
+              {t.home.crossDevice.text}
+            </p>
+            <p className="mt-5 rounded-2xl border border-driftBlue/15 bg-driftBlue/10 p-4 text-sm leading-6 text-sky-100">
+              {t.home.crossDevice.note}
+            </p>
+          </div>
+
+          <div className="float-soft reveal-up rounded-[2rem] border border-white/10 bg-black/25 p-5 shadow-glow backdrop-blur-2xl">
+            <div className="rounded-[1.6rem] border border-white/10 bg-white/[0.04] p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div className="rounded-[1.4rem] border border-white/10 bg-black/25 p-4">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-driftBlue to-driftViolet">
+                    <RiSmartphoneLine aria-hidden className="h-9 w-9 text-white" />
+                  </div>
+                  <p className="mt-3 text-center text-sm font-semibold text-white">
+                    {t.home.crossDevice.source}
+                  </p>
+                </div>
+                <div className="relative h-px flex-1 bg-gradient-to-r from-driftBlue via-white to-driftViolet">
+                  <span className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_24px_rgba(125,211,252,0.8)]" />
+                </div>
+                <div className="rounded-[1.4rem] border border-white/10 bg-black/25 p-4">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-driftViolet to-driftBlue">
+                    <RiMacbookLine aria-hidden className="h-9 w-9 text-white" />
+                  </div>
+                  <p className="mt-3 text-center text-sm font-semibold text-white">
+                    {t.home.crossDevice.destination}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-5 rounded-3xl border border-white/10 bg-black/25 p-4">
+                <div className="mb-3 flex items-center justify-between text-sm">
+                  <span className="text-mist">IMG_2847.mov</span>
+                  <span className="text-white">92%</span>
+                </div>
+                <div className="h-3 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full w-[92%] rounded-full bg-gradient-to-r from-driftBlue to-driftViolet" />
+                </div>
               </div>
             </div>
           </div>
@@ -511,7 +575,7 @@ export default function Home() {
           ))}
         </section>
 
-        <footer className="reveal-up mb-2 border-t border-white/10 py-8">
+        <footer className="reveal-up relative z-20 mb-2 rounded-3xl border border-white/10 bg-ink/55 px-5 py-6 backdrop-blur-xl">
           <div className="flex flex-col gap-4 text-sm text-mist md:flex-row md:items-center md:justify-between">
             <p>
               Made with ❤ by{" "}

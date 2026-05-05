@@ -8,6 +8,9 @@ export type FileMetadata = {
   filename: string;
   filetype: string;
   filesize: number;
+  batchId?: string;
+  batchIndex?: number;
+  batchTotal?: number;
 };
 
 export type FileControlMessage =
@@ -31,7 +34,8 @@ export function parseControlMessage(payload: string): FileControlMessage | null 
 export async function sendFileOverDataChannel(
   file: File,
   channel: RTCDataChannel,
-  onProgress: (sentBytes: number) => void
+  onProgress: (sentBytes: number) => void,
+  batch?: { batchId: string; batchIndex: number; batchTotal: number }
 ) {
   const fileId = crypto.randomUUID();
   const hasher = await createSHA256();
@@ -43,7 +47,8 @@ export async function sendFileOverDataChannel(
       fileId,
       filename: file.name,
       filetype: file.type || "application/octet-stream",
-      filesize: file.size
+      filesize: file.size,
+      ...batch
     } satisfies FileControlMessage)
   );
 

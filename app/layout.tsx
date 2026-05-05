@@ -15,7 +15,7 @@ const sora = Sora({
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Drift Transfer - Free Peer-to-Peer File Transfer",
+    default: "Drift Transfer - Free iPhone, Windows & Browser File Transfer",
     template: "%s | Drift Transfer"
   },
   description: siteConfig.description,
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     }
   },
   openGraph: {
-    title: "Drift Transfer - Free Peer-to-Peer File Transfer",
+    title: "Drift Transfer - Free iPhone, Windows & Browser File Transfer",
     description: siteConfig.description,
     url: siteConfig.url,
     siteName: siteConfig.name,
@@ -56,13 +56,13 @@ export const metadata: Metadata = {
         url: "/og-image.svg",
         width: 1200,
         height: 630,
-        alt: "Drift Transfer - Free peer-to-peer file transfer"
+        alt: "Drift Transfer - Free file transfer between iPhone, Windows, Mac, Android, and browsers"
       }
     ]
   },
   twitter: {
     card: "summary_large_image",
-    title: "Drift Transfer - Free Peer-to-Peer File Transfer",
+    title: "Drift Transfer - Free iPhone, Windows & Browser File Transfer",
     description: siteConfig.description,
     images: ["/og-image.svg"]
   }

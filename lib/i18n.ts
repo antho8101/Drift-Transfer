@@ -28,9 +28,18 @@ export const dictionaries = {
       badge: "✨ 100% free, no account, direct transfer",
       title: "Big files. Tiny effort. Pure browser magic.",
       intro:
-        "Drift Transfer is the no-account file drop your group chat wishes it had. Open a room, share the link, and let the file glide from one browser to another. No cloud upload detour, no account wall.",
+        "Drift Transfer is the no-account file drop your group chat wishes it had. Open a room, share the link, and let the file glide from one browser to another, even from iPhone to Windows. No cloud upload detour, no account wall.",
       support: "Donate to the project",
-      chips: ["⚡ Direct browser link", "🔒 No server storage", "🌍 Open source"],
+      chips: ["⚡ Direct browser link", "📱 iPhone to Windows friendly", "🔒 No server storage", "🌍 Open source"],
+      crossDevice: {
+        eyebrow: "📱 Cross-device transfer",
+        title: "iPhone to Windows should not feel like a side quest.",
+        text:
+          "Need to move photos, videos, PDFs, or project files from an iPhone to a Windows PC? Drift Transfer works through the browser, so it also covers those Apple-to-Microsoft moments without installing another sync app.",
+        source: "iPhone",
+        destination: "Windows PC",
+        note: "Also works with Mac, Android, Linux, tablets, and any modern browser."
+      },
       mockRoom: "🚀 Live room",
       mockTitle: "Secure device link, vibes included",
       connected: "✅ Connected",
@@ -187,6 +196,7 @@ export const dictionaries = {
       preparingLink: "Preparing link...",
       copied: "Copied. Go make magic.",
       copyInvite: "Copy invite link",
+      inviteAlternative: "or",
       verify: "🧬 Verify both devices",
       verifyText: "Both screens should show the same code before you send anything sensitive.",
       yourRole: "🎭 Your role",
@@ -204,6 +214,12 @@ export const dictionaries = {
       receiveTitle: "Ready to catch the drop",
       sendTitle: "Drop it here and ship it",
       receiveHelper: "Relax. The incoming file will show up here when it drifts in.",
+      receivePanelEyebrow: "Receive mode",
+      receivePanelTitle: "This device is waiting for incoming files.",
+      receivePanelText:
+        "No file drop needed here. Keep this tab open and the sender can ship files to you directly.",
+      receivePanelSwitch: "Want to send instead?",
+      receivePanelButton: "Switch to send mode",
       sendHelperLive: "Drop files or click Choose files. We are live.",
       sendHelperWaiting: "Choose files now. Send unlocks when the other device connects.",
       sendButton: "Woosh, send files",
@@ -281,9 +297,18 @@ export const dictionaries = {
       badge: "✨ 100% gratuit, sans compte, transfert direct",
       title: "Gros fichiers. Petit effort. Pure magie navigateur.",
       intro:
-        "Drift Transfer, c’est le dépôt de fichiers sans compte que ton groupe attendait. Ouvre une room, partage le lien, et laisse le fichier glisser d’un navigateur à l’autre. Pas de détour cloud, pas de mur de connexion.",
+        "Drift Transfer, c’est le dépôt de fichiers sans compte que ton groupe attendait. Ouvre une room, partage le lien, et laisse le fichier glisser d’un navigateur à l’autre, même d’un iPhone vers Windows. Pas de détour cloud, pas de mur de connexion.",
       support: "Faire un don",
-      chips: ["⚡ Lien direct navigateur", "🔒 Aucun stockage serveur", "🌍 Open source"],
+      chips: ["⚡ Lien direct navigateur", "📱 iPhone vers Windows", "🔒 Aucun stockage serveur", "🌍 Open source"],
+      crossDevice: {
+        eyebrow: "📱 Transfert entre appareils",
+        title: "iPhone vers Windows ne devrait pas être une quête secondaire.",
+        text:
+          "Besoin de déplacer des photos, vidéos, PDF ou fichiers de projet d’un iPhone vers un PC Windows ? Drift Transfer passe par le navigateur, donc il couvre aussi ces moments Apple vers Microsoft sans installer une nouvelle app de synchro.",
+        source: "iPhone",
+        destination: "PC Windows",
+        note: "Fonctionne aussi avec Mac, Android, Linux, tablettes et tout navigateur moderne."
+      },
       mockRoom: "🚀 Room live",
       mockTitle: "Lien privé établi, vibes incluses",
       connected: "✅ Connecté",
@@ -440,6 +465,7 @@ export const dictionaries = {
       preparingLink: "Préparation du lien...",
       copied: "Copié. À toi la magie.",
       copyInvite: "Copier le lien d’invitation",
+      inviteAlternative: "ou",
       verify: "🧬 Vérifier les deux appareils",
       verifyText: "Les deux écrans doivent afficher le même code avant d’envoyer un fichier sensible.",
       yourRole: "🎭 Ton rôle",
@@ -457,6 +483,12 @@ export const dictionaries = {
       receiveTitle: "Prêt à réceptionner",
       sendTitle: "Dépose ici et envoie",
       receiveHelper: "Relax. Le fichier entrant apparaîtra ici quand il arrive.",
+      receivePanelEyebrow: "Mode réception",
+      receivePanelTitle: "Cet appareil attend les fichiers entrants.",
+      receivePanelText:
+        "Pas besoin de zone de dépôt ici. Garde cet onglet ouvert et l’envoyeur pourra t’envoyer les fichiers directement.",
+      receivePanelSwitch: "Tu veux envoyer à la place ?",
+      receivePanelButton: "Passer en mode envoi",
       sendHelperLive: "Dépose des fichiers ou clique sur Choisir. C’est prêt.",
       sendHelperWaiting: "Choisis les fichiers maintenant. L’envoi se débloque quand l’autre appareil se connecte.",
       sendButton: "Woosh, envoyer les fichiers",

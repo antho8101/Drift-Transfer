@@ -27,7 +27,10 @@ export function ForbiddenView() {
               src="/drift_transfer_logo.svg"
               width={36}
             />
-            <span className="text-sm font-medium uppercase tracking-[0.32em] text-white">
+            <span
+              className="notranslate text-sm font-medium uppercase tracking-[0.32em] text-white"
+              translate="no"
+            >
               Drift Transfer
             </span>
           </Link>

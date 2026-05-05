@@ -22,4 +22,5 @@ export type DriftSignal =
   | { type: "peer-ready"; from: string }
   | { type: "offer"; from: string; sdp: RTCSessionDescriptionInit }
   | { type: "answer"; from: string; sdp: RTCSessionDescriptionInit }
-  | { type: "ice-candidate"; from: string; candidate: RTCIceCandidateInit };
+  | { type: "ice-candidate"; from: string; candidate: RTCIceCandidateInit }
+  | { type: "intent-role"; from: string; role: "send" | "receive" };

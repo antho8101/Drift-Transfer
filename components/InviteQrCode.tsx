@@ -7,10 +7,11 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "@/components/LanguageProvider";
 
 type InviteQrCodeProps = {
+  className?: string;
   value: string;
 };
 
-export function InviteQrCode({ value }: InviteQrCodeProps) {
+export function InviteQrCode({ className = "", value }: InviteQrCodeProps) {
   const t = useTranslations();
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -41,7 +42,7 @@ export function InviteQrCode({ value }: InviteQrCodeProps) {
   }, [isOpen, value]);
 
   return (
-    <div className="mt-4 rounded-3xl border border-white/10 bg-white/[0.035] p-4">
+    <div className={`rounded-3xl border border-white/10 bg-white/[0.035] p-4 ${className}`}>
       <button
         aria-expanded={isOpen}
         className="flex w-full items-center justify-between gap-3 text-left"
