@@ -9,6 +9,7 @@ import {
   RiSendPlaneLine,
   RiSparklingLine
 } from "@remixicon/react";
+import JSZip from "jszip";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -126,6 +127,7 @@ type RoomClientProps = {
 
 type ReceivedFile = {
   url: string;
+  blob: Blob;
   name: string;
   type: string;
   size: number;
@@ -139,6 +141,24 @@ type RecentTransfer = {
   direction: "sent" | "received";
   completedAt: string;
 };
+
+function getZipEntryName(file: ReceivedFile, index: number, usedNames: Set<string>) {
+  const fallbackName = `file-${index + 1}`;
+  const safeName = (file.name || fallbackName).replace(/[\\/]/g, "_").trim() || fallbackName;
+  const dotIndex = safeName.lastIndexOf(".");
+  const baseName = dotIndex > 0 ? safeName.slice(0, dotIndex) : safeName;
+  const extension = dotIndex > 0 ? safeName.slice(dotIndex) : "";
+  let candidate = safeName;
+  let duplicateIndex = 2;
+
+  while (usedNames.has(candidate)) {
+    candidate = `${baseName} (${duplicateIndex})${extension}`;
+    duplicateIndex += 1;
+  }
+
+  usedNames.add(candidate);
+  return candidate;
+}
 
 export function RoomClient({ roomId }: RoomClientProps) {
   const router = useRouter();
@@ -182,6 +202,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
   const [channelOpen, setChannelOpen] = useState(false);
   const [roomFull, setRoomFull] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [isPreparingArchive, setIsPreparingArchive] = useState(false);
   const [sendLocked, setSendLocked] = useState(false);
   const requestedRole = searchParams.get("role");
   const intentRole: IntentRole = requestedRole === "send" ? "send" : "receive";
@@ -259,17 +280,20 @@ export function RoomClient({ roomId }: RoomClientProps) {
     const metadata = metadataRef.current;
 
     if (message.kind === "complete" && metadata && message.fileId === metadata.fileId) {
+      const completedChunks = chunksRef.current;
+      chunksRef.current = [];
+      metadataRef.current = null;
       setReceivedBytes(metadata.filesize);
       setTransferState("processing");
       setStatusKey("processingDownload");
       setStatusTone("connected");
       await waitForNextFrame();
 
-      const blob = new Blob(chunksRef.current, { type: metadata.filetype });
+      const blob = new Blob(completedChunks, { type: metadata.filetype });
       const url = URL.createObjectURL(blob);
       const hasher = await createSHA256();
 
-      for (const chunk of chunksRef.current) {
+      for (const chunk of completedChunks) {
         hasher.update(new Uint8Array(chunk));
       }
 
@@ -279,6 +303,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
       receivedFileUrlsRef.current.push(url);
       const nextReceivedFile = {
         url,
+        blob,
         name: metadata.filename,
         type: metadata.filetype,
         size: metadata.filesize,
@@ -751,6 +776,43 @@ export function RoomClient({ roomId }: RoomClientProps) {
     }).catch(() => undefined);
   }
 
+  const downloadReceivedFiles = useCallback(async () => {
+    if (!receivedFiles.length || isPreparingArchive) {
+      return;
+    }
+
+    setIsPreparingArchive(true);
+
+    try {
+      const link = document.createElement("a");
+
+      if (receivedFiles.length === 1) {
+        const [file] = receivedFiles;
+        link.href = file.url;
+        link.download = file.name;
+        link.click();
+        return;
+      }
+
+      const zip = new JSZip();
+      const usedNames = new Set<string>();
+
+      receivedFiles.forEach((file, index) => {
+        zip.file(getZipEntryName(file, index, usedNames), file.blob);
+      });
+
+      const archiveBlob = await zip.generateAsync({ type: "blob" });
+      const archiveUrl = URL.createObjectURL(archiveBlob);
+      link.href = archiveUrl;
+      link.download = `drift-transfer-${roomId}.zip`;
+      link.click();
+
+      window.setTimeout(() => URL.revokeObjectURL(archiveUrl), 1000);
+    } finally {
+      setIsPreparingArchive(false);
+    }
+  }, [isPreparingArchive, receivedFiles, roomId]);
+
   const isOutgoingTransferView =
     transferState === "sending" ||
     (transferState !== "receiving" &&
@@ -865,21 +927,6 @@ export function RoomClient({ roomId }: RoomClientProps) {
                 {t.room.verifyText}
               </p>
             </div>
-
-            {intentRole === "send" ? (
-              <div className="mt-6 grid gap-3 text-sm text-mist">
-                <div className="premium-card flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                  <span>{t.room.yourRole}</span>
-                  <span className="font-medium text-white">{t.room.sendRole}</span>
-                </div>
-                <div className="premium-card flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                  <span>{t.room.fileChannel}</span>
-                  <span className="font-medium text-white">
-                    {channelOpen ? t.room.openReady : t.room.warmingUp}
-                  </span>
-                </div>
-              </div>
-            ) : null}
 
             {error ? (
               <div className="mt-6 rounded-2xl border border-red-300/20 bg-red-300/10 p-4 text-sm text-red-100">
@@ -1145,23 +1192,37 @@ export function RoomClient({ roomId }: RoomClientProps) {
                 {t.room.downloadReadyText}
               </p>
 
-              <div className="mt-6 grid gap-3">
-                {receivedFiles.map((file) => (
-                  <a
-                    className="magic-button inline-flex w-full items-center justify-between rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5"
-                    download={file.name}
-                    href={file.url}
-                    key={`${file.name}-${file.checksum}`}
-                  >
-                    <span className="inline-flex min-w-0 items-center gap-2">
-                      <RiDownloadLine aria-hidden className="h-[22px] w-[22px] shrink-0" />
-                      <span className="truncate">{t.room.download} {file.name}</span>
+              <div className="mt-6 grid gap-4">
+                <button
+                  className="magic-button inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-driftBlue to-driftViolet px-5 py-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isPreparingArchive}
+                  onClick={() => void downloadReceivedFiles()}
+                  type="button"
+                >
+                  <span className="inline-flex min-w-0 items-center gap-2">
+                    <RiDownloadLine aria-hidden className="h-[22px] w-[22px] shrink-0" />
+                    <span className="truncate">
+                      {isPreparingArchive
+                        ? t.room.preparingArchive
+                        : receivedFiles.length > 1
+                          ? t.room.downloadAll
+                          : `${t.room.download} ${receivedFiles[0]?.name ?? ""}`}
                     </span>
-                    <span className="shrink-0">
-                      {file.verified ? t.room.verified : t.room.checkFailed}
-                    </span>
-                  </a>
-                ))}
+                  </span>
+                </button>
+                <div className="grid max-h-56 gap-2 overflow-auto pr-1 text-left">
+                  {receivedFiles.map((file) => (
+                    <div
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm"
+                      key={`${file.name}-${file.checksum}`}
+                    >
+                      <span className="truncate text-white">{file.name}</span>
+                      <span className="shrink-0 text-mist">
+                        {file.verified ? t.room.verified : t.room.checkFailed}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

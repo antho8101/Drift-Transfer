@@ -1,6 +1,6 @@
 {
   "name": "drift-transfer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Free open-source peer-to-peer file transfer with WebRTC DataChannels.",
   "private": true,
   "author": "Anthony Carayon",
@@ -31,6 +31,7 @@
     "@vercel/analytics": "^2.0.1",
     "ably": "latest",
     "hash-wasm": "^4.12.0",
+    "jszip": "^3.10.1",
     "next": "^16.2.4",
     "qrcode": "^1.5.4",
     "react": "^19.2.5",

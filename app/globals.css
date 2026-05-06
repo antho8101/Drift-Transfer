@@ -213,6 +213,17 @@ code {
   }
 }
 
+@keyframes transfer-pulse {
+  0%,
+  100% {
+    transform: translate(calc(-50% - 5.5rem), -50%);
+  }
+
+  50% {
+    transform: translate(calc(-50% + 5.5rem), -50%);
+  }
+}
+
 .reveal-up {
   animation: reveal-up 0.8s ease both;
   animation-timeline: view();
@@ -225,6 +236,12 @@ code {
 
 .float-soft {
   animation: soft-float 7s ease-in-out infinite;
+}
+
+.transfer-pulse {
+  animation: transfer-pulse 2.4s ease-in-out infinite;
+  transform: translate(-50%, -50%);
+  will-change: transform;
 }
 
 .grain-overlay {
@@ -369,6 +386,7 @@ code {
   .ambient-grid,
   .ambient-orb,
   .ambient-orb-alt,
+  .transfer-pulse,
   body {
     animation: none;
   }

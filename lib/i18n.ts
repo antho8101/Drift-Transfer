@@ -237,6 +237,8 @@ export const dictionaries = {
       pending: "Pending",
       file: "File",
       download: "Download",
+      downloadAll: "Download everything as a ZIP",
+      preparingArchive: "Preparing ZIP...",
       openDownloads: "Open downloads",
       downloadReadyTitle: "Your file landed",
       downloadReadyText:
@@ -506,6 +508,8 @@ export const dictionaries = {
       pending: "En attente",
       file: "Fichier",
       download: "Télécharger",
+      downloadAll: "Tout télécharger en ZIP",
+      preparingArchive: "Préparation du ZIP...",
       openDownloads: "Ouvrir les téléchargements",
       downloadReadyTitle: "Ton fichier est arrivé",
       downloadReadyText:

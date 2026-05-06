@@ -91,46 +91,6 @@ function FeatureMockup({ detail, label, title, variant }: FeatureMockupProps) {
   );
 }
 
-function TransferFlowMockup({
-  labels
-}: {
-  labels: { done: string; invite: string; room: string; transfer: string };
-}) {
-  const steps = [labels.room, labels.invite, labels.transfer, labels.done];
-
-  return (
-    <div className="reveal-up rounded-[2rem] border border-white/10 bg-white/[0.045] p-6 backdrop-blur-2xl">
-      <div className="rounded-[1.5rem] border border-white/10 bg-black/25 p-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3 text-xs uppercase tracking-[0.22em] text-mist">
-          <span>Drift flow</span>
-          <span className="text-emerald-200">online</span>
-        </div>
-        <div className="mt-5 grid gap-3">
-          {steps.map((step, index) => (
-            <div
-              className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3"
-              key={step}
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-driftBlue to-driftViolet text-sm font-semibold text-white">
-                {index + 1}
-              </span>
-              <div>
-                <p className="text-sm font-medium text-white">{step}</p>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-driftBlue to-driftViolet"
-                    style={{ width: `${36 + index * 18}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function RepoMockup({
   labels
 }: {
@@ -414,7 +374,7 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="relative h-px flex-1 bg-gradient-to-r from-driftBlue via-white to-driftViolet">
-                  <span className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_24px_rgba(125,211,252,0.8)]" />
+                  <span className="transfer-pulse absolute left-1/2 top-1/2 h-3 w-3 rounded-full bg-white shadow-[0_0_24px_rgba(125,211,252,0.8)]" />
                 </div>
                 <div className="rounded-[1.4rem] border border-white/10 bg-black/25 p-4">
                   <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-driftViolet to-driftBlue">
@@ -474,47 +434,17 @@ export default function Home() {
               {t.home.howText}
             </p>
           </div>
-          <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-              {t.home.steps.map((step, index) => (
-                <div
-                  className="premium-card reveal-up rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-6"
-                  key={step}
-                >
-                  <span className="text-sm text-driftViolet">0{index + 1}</span>
-                  <p className="mt-4 text-xl font-medium text-white">{step}</p>
-                </div>
-              ))}
-            </div>
-            <TransferFlowMockup labels={t.home.flowMockup} />
-          </div>
-        </section>
-
-        <section className="grid gap-4 py-8 md:grid-cols-2">
-          {t.home.faq.slice(0, 2).map((item, index) => (
-            <article
-              className="premium-card reveal-up rounded-[1.75rem] border border-white/10 bg-white/[0.045] p-6 backdrop-blur-2xl"
-              key={item.title}
-            >
-              <div className="mb-5 rounded-3xl border border-white/10 bg-black/25 p-4">
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.22em] text-mist">
-                  <span>{t.home.qaMockups[index].label}</span>
-                  <span className="rounded-full bg-emerald-300/10 px-2 py-1 text-emerald-200">
-                    {t.home.qaMockups[index].status}
-                  </span>
-                </div>
-                <div className="mt-4 grid gap-2">
-                  <div className="h-2 rounded-full bg-white/10">
-                    <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-driftBlue to-driftViolet" />
-                  </div>
-                  <div className="h-2 w-1/2 rounded-full bg-white/10" />
-                  <div className="h-2 w-5/6 rounded-full bg-white/10" />
-                </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {t.home.steps.map((step, index) => (
+              <div
+                className="premium-card reveal-up rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-6"
+                key={step}
+              >
+                <span className="text-sm text-driftViolet">0{index + 1}</span>
+                <p className="mt-4 text-xl font-medium text-white">{step}</p>
               </div>
-              <h2 className="text-lg font-semibold text-white">{item.title}</h2>
-              <p className="mt-3 leading-7 text-mist">{item.text}</p>
-            </article>
-          ))}
+            ))}
+          </div>
         </section>
 
         <section
@@ -564,7 +494,7 @@ export default function Home() {
         </section>
 
         <section className="reveal-up grid gap-4 py-8 md:grid-cols-3">
-          {t.home.faq.slice(2).map((item) => (
+          {t.home.faq.map((item) => (
             <article
               className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-6"
               key={item.title}
@@ -575,7 +505,7 @@ export default function Home() {
           ))}
         </section>
 
-        <footer className="reveal-up relative z-20 mb-2 rounded-3xl border border-white/10 bg-ink/55 px-5 py-6 backdrop-blur-xl">
+        <footer className="relative z-40 isolate mb-2 rounded-3xl border border-white/15 bg-ink/85 px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl">
           <div className="flex flex-col gap-4 text-sm text-mist md:flex-row md:items-center md:justify-between">
             <p>
               Made with ❤ by{" "}
